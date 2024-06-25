@@ -1,0 +1,8 @@
+resources:
+- manager.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: controller
+  newName: europe-north1-docker.pkg.dev/artifact-registry-5n/dapla-lab-docker/ssbucketeer
+  newTag: local-dev-4

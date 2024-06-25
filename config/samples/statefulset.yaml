@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  name: testing
+  namespace: user-ssb-kons-stolen
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: testing
+  namespace: user-ssb-kons-stolen
+  annotations:
+    dapla.ssb.no/enable-ssbucketeer: "true"
+    dapla.ssb.no/impersonate-group: my-group-developers
+    dapla.ssb.no/service-container-name: ubu
+    dapla.ssb.no/mount-buckets: my-bucket-1,my-bucket-2
+spec:
+  selector:
+    matchLabels:
+      app: testing
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: testing
+    spec:
+      serviceAccountName: testing
+      containers:
+        - name: ubu
+          image: ubuntu:latest
+          command:
+            - "sleep"
+            - "604800"
+---
+
