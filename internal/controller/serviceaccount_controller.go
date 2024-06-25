@@ -134,6 +134,9 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if sa.Annotations[gkeWIAnnotation] != gcpSa {
 		sa.Annotations[gkeWIAnnotation] = gcpSa
 		if err := r.Update(ctx, &sa); err != nil {
+			if apierrors.IsConflict(err) {
+				return ctrl.Result{Requeue: true}, nil
+			}
 			log.Error(err, "failed to add GKE WI annotation to ServiceAccount")
 			return ctrl.Result{}, err
 		}

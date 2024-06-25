@@ -18,10 +18,15 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
+	rm "cloud.google.com/go/resourcemanager/apiv3"
+	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/iterator"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,8 +44,16 @@ type StatefulSetReconciler struct {
 
 	Auth Auther
 
+	Storage  *storage.Client
+	Projects *rm.ProjectsClient
+	Folders  *rm.FoldersClient
+
 	DaplaGroupSaProject string
+	TeamsFolderNumber   string
+	Stage               string
 }
+
+var groupSuffixes = []string{"-developers", "-data-admins"}
 
 //+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
@@ -71,7 +84,7 @@ func (r *StatefulSetReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// 0. Add necessary pod annotations for gcsfuse
 
-	if modified := r.ensurePodAnnotations(ctx, &sfs.Spec.Template); modified {
+	if modified := ensurePodAnnotations(&sfs.Spec.Template); modified {
 		if err := r.Update(ctx, &sfs); err != nil {
 			log.Error(err, "failed to add annotations to pod template")
 			return determineResult(ctrl.Result{}, err)
@@ -124,6 +137,23 @@ func (r *StatefulSetReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		bucketMounts[bucket] = bucket
 	}
 
+	// TODO: Use Dapla Team API for this?
+	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
+		team := group
+		for _, suffix := range groupSuffixes {
+			team = strings.TrimSuffix(group, suffix)
+			if team != group {
+				if err := r.addStandardBuckets(ctx, "", bucketMounts); err != nil {
+					log.Error(err, "failed to add standard buckets")
+				}
+				break
+			}
+		}
+		if team == group {
+			log.Error(errors.New("could not deduce team from group"), "team could not be deduced form group", "group", group)
+		}
+	}
+
 	if modified := addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts); modified {
 		if err := r.Update(ctx, &sfs); err != nil {
 			log.Error(err, "failed to update StatefulSet")
@@ -155,7 +185,50 @@ func determineResult(res ctrl.Result, err error) (ctrl.Result, error) {
 	return res, err
 }
 
-func (r *StatefulSetReconciler) ensurePodAnnotations(ctx context.Context, podTemplate *corev1.PodTemplateSpec) (modified bool) {
+func (r *StatefulSetReconciler) addStandardBuckets(ctx context.Context, team string, bucketMounts map[string]string) error {
+	teamFolderIt := r.Folders.SearchFolders(ctx, &rmpb.SearchFoldersRequest{
+		Query: fmt.Sprintf(`parent=folders/%s AND state=ACTIVE AND displayName="%s"`, r.TeamsFolderNumber, team),
+	})
+
+	// TODO? there should only ever be one folder with a specfic display name in a folder,
+	// do we need to check anything?
+	folder, err := teamFolderIt.Next()
+	if err != nil {
+		return err
+	}
+
+	projectIt := r.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
+		Query: fmt.Sprintf(`parent=%s AND state=ACTIVE AND displayName="%s"`, folder.Name, fmt.Sprintf("%s-%s", team, string(r.Stage[0]))),
+	})
+
+	project, err := projectIt.Next()
+	if err != nil {
+		return err
+	}
+
+	bucketPrefix := fmt.Sprintf("ssb-%s-data-", team)
+	bucketIt := r.Storage.Buckets(ctx, project.ProjectId)
+	bucketIt.Prefix = bucketPrefix
+
+	for {
+		bucket, err := bucketIt.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		withoutPrefix := strings.TrimSuffix(
+			strings.TrimPrefix(bucket.Name, bucketPrefix),
+			fmt.Sprintf("-%s", r.Stage),
+		)
+		bucketMounts[withoutPrefix] = bucket.Name
+	}
+
+	return nil
+}
+
+func ensurePodAnnotations(podTemplate *corev1.PodTemplateSpec) (modified bool) {
 	if podTemplate.Annotations == nil {
 		podTemplate.Annotations = make(map[string]string, 2)
 	}

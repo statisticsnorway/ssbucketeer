@@ -45,6 +45,8 @@ import (
 
 type config struct {
 	DaplaGroupSaProjectId string `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
+	TeamsFolderNumber     string `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
+	Stage                 string `env:"ENVIRONMENT,required,notEmpty"`
 }
 
 var (
@@ -160,6 +162,8 @@ func main() {
 		Scheme:              mgr.GetScheme(),
 		DaplaGroupSaProject: cfg.DaplaGroupSaProjectId,
 		Auth:                gAuth,
+		TeamsFolderNumber:   cfg.TeamsFolderNumber,
+		Stage:               cfg.Stage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StatefulSet")
 		os.Exit(1)
