@@ -26,6 +26,8 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
+	"cloud.google.com/go/storage"
 	"google.golang.org/api/iam/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -46,7 +48,7 @@ import (
 type config struct {
 	DaplaGroupSaProjectId string `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
 	TeamsFolderNumber     string `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
-	Stage                 string `env:"ENVIRONMENT,required,notEmpty"`
+	Stage                 string `env:"STAGE,required,notEmpty"`
 }
 
 var (
@@ -139,6 +141,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx := context.Background()
+
 	gkeProjectId, err := getGKEProjectId()
 	if err != nil {
 		setupLog.Error(err, "failed to get GKE project ID")
@@ -151,9 +155,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	iamService, err := iam.NewService(context.Background())
+	iamService, err := iam.NewService(ctx)
 	if err != nil {
 		setupLog.Error(err, "failed to set up IAM service")
+		os.Exit(1)
+	}
+
+	projectsClient, err := resourcemanager.NewProjectsClient(ctx)
+	if err != nil {
+		setupLog.Error(err, "failed to set up projects client")
+		os.Exit(1)
+	}
+
+	foldersClient, err := resourcemanager.NewFoldersClient(ctx)
+	if err != nil {
+		setupLog.Error(err, "failed to set up folders client")
+		os.Exit(1)
+	}
+
+	storageClient, err := storage.NewClient(ctx)
+	if err != nil {
+		setupLog.Error(err, "failed to set up storage client")
 		os.Exit(1)
 	}
 
@@ -164,6 +186,9 @@ func main() {
 		Auth:                gAuth,
 		TeamsFolderNumber:   cfg.TeamsFolderNumber,
 		Stage:               cfg.Stage,
+		Projects:            projectsClient,
+		Folders:             foldersClient,
+		Storage:             storageClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StatefulSet")
 		os.Exit(1)
