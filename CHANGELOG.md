@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.6...v0.0.7) (2024-06-25)
+
+
+### Bug Fixes
+
+* actually pass the team name instead of an empty string ([846f080](https://github.com/statisticsnorway/ssbucketeer/commit/846f080c68f32e8362d8c944229eec1e5b0fc2f1))
+
 ## [0.0.6](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.5...v0.0.6) (2024-06-25)
 
 
