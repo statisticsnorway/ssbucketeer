@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.4...v0.0.5) (2024-06-25)
+
+
+### Bug Fixes
+
+* create necessary clients fro sfs reconciler ([54f16d5](https://github.com/statisticsnorway/ssbucketeer/commit/54f16d5d15a46bc5bb0967143c6e38f207760ba1))
+
 ## [0.0.4](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.3...v0.0.4) (2024-06-25)
 
 
