@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.5...v0.0.6) (2024-06-25)
+
+
+### Bug Fixes
+
+* try to fix iterator error, add some logging ([eaea2fe](https://github.com/statisticsnorway/ssbucketeer/commit/eaea2fec1119a5321b101fca4e80a324ac93071d))
+
 ## [0.0.5](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.4...v0.0.5) (2024-06-25)
 
 
