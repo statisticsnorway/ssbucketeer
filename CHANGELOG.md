@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.3...v0.0.4) (2024-06-25)
+
+
+### Features
+
+* support mounting standard buckets automatically ([bcf2b7e](https://github.com/statisticsnorway/ssbucketeer/commit/bcf2b7ebaca099c8d292f4023745271934392fe6))
+
 ## [0.0.3](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.2...v0.0.3) (2024-06-25)
 
 
