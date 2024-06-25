@@ -19,11 +19,11 @@ func volumeMountNameIs(name string) func(v corev1.VolumeMount) bool {
 	}
 }
 
-func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, bucketNames []string) (shouldUpdate bool) {
-	volumes := make([]corev1.Volume, 0, len(bucketNames))
-	volumeMounts := make([]corev1.VolumeMount, 0, len(bucketNames))
-	for _, bucket := range bucketNames {
-		volumeName := fmt.Sprintf("gcsfuse-%s", bucket)
+func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, bucketMounts map[string]string) (shouldUpdate bool) {
+	volumes := make([]corev1.Volume, 0, len(bucketMounts))
+	volumeMounts := make([]corev1.VolumeMount, 0, len(bucketMounts))
+	for mountPoint, bucket := range bucketMounts {
+		volumeName := fmt.Sprintf("gcsfuse-%s", mountPoint)
 
 		// TODO: Test whether the group has read/write access
 		if !slices.ContainsFunc(podspec.Volumes, volumeNameIs(volumeName)) {
@@ -46,7 +46,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 		if !slices.ContainsFunc(container.VolumeMounts, volumeMountNameIs(volumeName)) {
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      volumeName,
-				MountPath: fmt.Sprintf("/buckets/%s", bucket),
+				MountPath: fmt.Sprintf("/buckets/%s", mountPoint),
 				ReadOnly:  false,
 			})
 		}

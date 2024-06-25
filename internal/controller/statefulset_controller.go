@@ -42,11 +42,6 @@ type StatefulSetReconciler struct {
 	DaplaGroupSaProject string
 }
 
-type BucketMount struct {
-	Bucket     string
-	MountPoint string
-}
-
 //+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=update
@@ -124,7 +119,12 @@ func (r *StatefulSetReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	if modified := addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketNames); modified {
+	bucketMounts := make(map[string]string, len(bucketNames))
+	for _, bucket := range bucketNames {
+		bucketMounts[bucket] = bucket
+	}
+
+	if modified := addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts); modified {
 		if err := r.Update(ctx, &sfs); err != nil {
 			log.Error(err, "failed to update StatefulSet")
 			return determineResult(ctrl.Result{}, err)
