@@ -194,7 +194,7 @@ func (r *StatefulSetReconciler) addStandardBuckets(ctx context.Context, team str
 	// do we need to check anything?
 	folder, err := teamFolderIt.Next()
 	if err != nil {
-		return err
+		return fmt.Errorf("get folder %q: %w", team, err)
 	}
 
 	projectIt := r.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
@@ -203,7 +203,7 @@ func (r *StatefulSetReconciler) addStandardBuckets(ctx context.Context, team str
 
 	project, err := projectIt.Next()
 	if err != nil {
-		return err
+		return fmt.Errorf("get project %q in folder %q: %w", team, folder.Name, err)
 	}
 
 	bucketPrefix := fmt.Sprintf("ssb-%s-data-", team)
@@ -216,7 +216,7 @@ func (r *StatefulSetReconciler) addStandardBuckets(ctx context.Context, team str
 			break
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("get bucket: %w", err)
 		}
 		withoutPrefix := strings.TrimSuffix(
 			strings.TrimPrefix(bucket.Name, bucketPrefix),
