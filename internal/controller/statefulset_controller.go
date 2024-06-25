@@ -143,7 +143,7 @@ func (r *StatefulSetReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		for _, suffix := range groupSuffixes {
 			team = strings.TrimSuffix(group, suffix)
 			if team != group {
-				if err := r.addStandardBuckets(ctx, "", bucketMounts); err != nil {
+				if err := r.addStandardBuckets(ctx, team, bucketMounts); err != nil {
 					log.Error(err, "failed to add standard buckets")
 				}
 				break
@@ -187,7 +187,7 @@ func determineResult(res ctrl.Result, err error) (ctrl.Result, error) {
 
 func (r *StatefulSetReconciler) addStandardBuckets(ctx context.Context, team string, bucketMounts map[string]string) error {
 	teamFolderIt := r.Folders.SearchFolders(ctx, &rmpb.SearchFoldersRequest{
-		Query: fmt.Sprintf(`parent=folders/%s AND state=ACTIVE AND displayName="%s"`, r.TeamsFolderNumber, team),
+		Query: fmt.Sprintf(`parent=folders/%s AND state=ACTIVE AND displayName=%s`, r.TeamsFolderNumber, team),
 	})
 
 	// TODO? there should only ever be one folder with a specfic display name in a folder,
@@ -198,7 +198,7 @@ func (r *StatefulSetReconciler) addStandardBuckets(ctx context.Context, team str
 	}
 
 	projectIt := r.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
-		Query: fmt.Sprintf(`parent=%s AND state=ACTIVE AND displayName="%s"`, folder.Name, fmt.Sprintf("%s-%s", team, string(r.Stage[0]))),
+		Query: fmt.Sprintf(`parent=%s AND state=ACTIVE AND displayName=%s`, folder.Name, fmt.Sprintf("%s-%s", team, string(r.Stage[0]))),
 	})
 
 	project, err := projectIt.Next()
