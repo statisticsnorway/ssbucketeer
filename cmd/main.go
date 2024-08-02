@@ -191,6 +191,13 @@ func main() {
 			TeamsFolderNumber: cfg.TeamsFolderNumber,
 			Stage:             cfg.Stage,
 		}).SetupWithManager(mgr)
+
+		if err = (&controller.ServiceAccountValidator{
+			Auth: gAuth,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to register webhook", "webhook", "ServiceAccount")
+			os.Exit(1)
+		}
 	}
 
 	if err = (&controller.ServiceAccountReconciler{
