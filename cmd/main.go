@@ -42,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/caarlos0/env/v11"
+
 	"github.com/statisticsnorway/ssbucketeer/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
@@ -180,15 +181,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	(&controller.StatefulsetMutator{
-		Client:            mgr.GetClient(),
-		Decoder:           admission.NewDecoder(mgr.GetScheme()),
-		Storage:           storageClient,
-		Projects:          projectsClient,
-		Folders:           foldersClient,
-		TeamsFolderNumber: cfg.TeamsFolderNumber,
-		Stage:             cfg.Stage,
-	}).SetupWithManager(mgr)
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		(&controller.StatefulsetMutator{
+			Client:            mgr.GetClient(),
+			Decoder:           admission.NewDecoder(mgr.GetScheme()),
+			Storage:           storageClient,
+			Projects:          projectsClient,
+			Folders:           foldersClient,
+			TeamsFolderNumber: cfg.TeamsFolderNumber,
+			Stage:             cfg.Stage,
+		}).SetupWithManager(mgr)
+	}
 
 	if err = (&controller.ServiceAccountReconciler{
 		Client:              mgr.GetClient(),
