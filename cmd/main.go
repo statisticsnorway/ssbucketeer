@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/statisticsnorway/ssbucketeer/internal/controller"
@@ -179,20 +180,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.StatefulSetReconciler{
-		Client:              mgr.GetClient(),
-		Scheme:              mgr.GetScheme(),
-		DaplaGroupSaProject: cfg.DaplaGroupSaProjectId,
-		Auth:                gAuth,
-		TeamsFolderNumber:   cfg.TeamsFolderNumber,
-		Stage:               cfg.Stage,
-		Projects:            projectsClient,
-		Folders:             foldersClient,
-		Storage:             storageClient,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "StatefulSet")
-		os.Exit(1)
-	}
+	(&controller.StatefulsetMutator{
+		Client:            mgr.GetClient(),
+		Decoder:           admission.NewDecoder(mgr.GetScheme()),
+		Storage:           storageClient,
+		Projects:          projectsClient,
+		Folders:           foldersClient,
+		TeamsFolderNumber: cfg.TeamsFolderNumber,
+		Stage:             cfg.Stage,
+	}).SetupWithManager(mgr)
+
 	if err = (&controller.ServiceAccountReconciler{
 		Client:              mgr.GetClient(),
 		Scheme:              mgr.GetScheme(),
