@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"strings"
 
 	"google.golang.org/api/iam/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -105,31 +104,12 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
-	// 2. Check membership
-	user := strings.TrimPrefix(req.Namespace, userNamespacePrefix)
-	if user == req.Namespace {
-		log.Error(fmt.Errorf("attempted to impersonate group %q from non-user namespace %q", group, req.Namespace), "attempt to impersonate group from non-user namespace")
-		return ctrl.Result{}, nil
-	}
-
-	// Do not allow non-members to impersonate a group SA
-	isMember, err := r.Auth.UserIsMemberOf(user, group)
-	if err != nil {
-		log.Error(err, "failed to look up group membership")
-		return ctrl.Result{}, err
-	}
-
-	if !isMember {
-		log.Error(fmt.Errorf("user %q is not a member of group %q", user, group), "user tried to impersonate a group they are not a member of")
-		return ctrl.Result{}, nil
-	}
-
-	// 3. Handle GCP IAM binding
+	// Handle the needed IAM bindings
 	if res, err := r.handleGcpSa(ctx, group, req.NamespacedName); err != nil {
 		return res, err
 	}
 
-	// 4. Add GKE WI annotation to SA
+	// Add GKE WI annotation to SA
 	gcpSa := fmt.Sprintf("%s@%s.iam.gserviceaccount.com", group, r.DaplaGroupSaProject)
 	if sa.Annotations[gkeWIAnnotation] != gcpSa {
 		sa.Annotations[gkeWIAnnotation] = gcpSa

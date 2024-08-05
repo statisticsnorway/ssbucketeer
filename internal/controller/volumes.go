@@ -7,6 +7,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// ptr is a convenience function for generating pointers of primitive types
+func ptr[T any](t T) *T {
+	return &t
+}
+
 func volumeNameIs(name string) func(v corev1.Volume) bool {
 	return func(v corev1.Volume) bool {
 		return v.Name == name
