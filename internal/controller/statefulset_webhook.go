@@ -144,14 +144,30 @@ func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace
 	return nil
 }
 
+func getFolderWithDisplayName(it *rm.FolderIterator, displayName string) (*rmpb.Folder, error) {
+	for {
+		folder, err := it.Next()
+		if err != nil {
+			return nil, err
+		}
+		if folder.DisplayName == displayName {
+			return folder, nil
+		}
+	}
+}
+
 func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string, bucketMounts map[string]string) error {
-	teamFolderIt := m.Folders.SearchFolders(ctx, &rmpb.SearchFoldersRequest{
-		Query: fmt.Sprintf(`parent=folders/%s AND state=ACTIVE AND displayName=%s`, m.TeamsFolderNumber, team),
+	// teamFolderIt := m.Folders.SearchFolders(ctx, &rmpb.SearchFoldersRequest{
+	// 	Query: fmt.Sprintf(`parent=folders/%s AND state=ACTIVE AND displayName=%s`, m.TeamsFolderNumber, team),
+	// })
+
+	teamFolderIt := m.Folders.ListFolders(ctx, &rmpb.ListFoldersRequest{
+		Parent: fmt.Sprintf("folders/%s", m.TeamsFolderNumber),
 	})
 
 	// TODO? there should only ever be one folder with a specfic display name in a folder,
 	// do we need to check anything?
-	folder, err := teamFolderIt.Next()
+	folder, err := getFolderWithDisplayName(teamFolderIt, team)
 	if err != nil {
 		return fmt.Errorf("get folder %q: %w", team, err)
 	}
