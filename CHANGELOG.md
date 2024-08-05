@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.7...v0.0.8) (2024-08-05)
+
+
+### Features
+
+* use webhooks instead of reconcilers for validation ([#9](https://github.com/statisticsnorway/ssbucketeer/issues/9)) ([f065db3](https://github.com/statisticsnorway/ssbucketeer/commit/f065db3e66d70cb023abae6305c625d4d2e6757d))
+
 ## [0.0.7](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.6...v0.0.7) (2024-06-25)
 
 
