@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.8...v0.0.9) (2024-08-05)
+
+
+### Bug Fixes
+
+* use list API for team folder discovery ([#11](https://github.com/statisticsnorway/ssbucketeer/issues/11)) ([4856e95](https://github.com/statisticsnorway/ssbucketeer/commit/4856e95bde40e220e36876cd6c8e95d323c78601))
+
 ## [0.0.8](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.7...v0.0.8) (2024-08-05)
 
 
