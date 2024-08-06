@@ -21,5 +21,5 @@ changelog:
     perf: Performance Improvements
     merge: Merges
     breakingChange: BREAKING CHANGES
-  commitUrl: https://github.com/statisticsnorway/keycloakerator/commit/%commit%
-  commitRangeUrl: https://github.com/statisticsnorway/keycloakerator/compare/%from%...%to%?diff=split
+  commitUrl: https://github.com/statisticsnorway/ssbucketeer/commit/%commit%
+  commitRangeUrl: https://github.com/statisticsnorway/ssbucketeer/compare/%from%...%to%?diff=split
