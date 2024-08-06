@@ -28,6 +28,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"cloud.google.com/go/storage"
+	"google.golang.org/api/cloudidentity/v1"
 	"google.golang.org/api/iam/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -151,11 +152,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	gAuth, err := controller.NewGoogleAuth()
+	ciService, err := cloudidentity.NewService(ctx)
 	if err != nil {
-		setupLog.Error(err, "failed to set up Google Auther")
+		setupLog.Error(err, "failed to create Cloud Identity service")
 		os.Exit(1)
 	}
+	gAuth := &controller.GoogleAuther{Ci: ciService}
 
 	iamService, err := iam.NewService(ctx)
 	if err != nil {
