@@ -80,10 +80,10 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	sfs.Annotations[probeCompletedAnnotation] = "true"
 
 	if err := r.Update(ctx, &sfs); err != nil {
-		log.Error(err, "could not update StatefulSet")
 		if apierrors.IsConflict(err) {
 			return ctrl.Result{Requeue: true}, nil
 		}
+		log.Error(err, "could not update StatefulSet")
 		return ctrl.Result{}, err
 	}
 
