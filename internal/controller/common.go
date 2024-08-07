@@ -11,8 +11,6 @@ const (
 	probeJobStatefulsetAnnotation  = "dapla.ssb.no/statefulset-probe-name"
 	probeCompletedAnnotation       = "dapla.ssb.no/iam-probe-completed"
 
-	alphaTestNamespace = "user-ssb-kons-stolen"
-
 	istioExcludedIpRangesAnnotation = "traffic.sidecar.istio.io/excludeOutboundIPRanges"
 	gcsfuseOutboundIPRange          = "169.254.169.254/32"
 

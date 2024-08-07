@@ -117,7 +117,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts)
 
-	if sfs.Namespace == alphaTestNamespace && sfs.Annotations[probeCompletedAnnotation] != "true" {
+	if sfs.Annotations[probeCompletedAnnotation] != "true" {
 		sfs.Spec.Replicas = ptr[int32](0)
 
 		probeJob := &batchv1.Job{
