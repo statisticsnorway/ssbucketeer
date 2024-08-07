@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.9...v0.0.10) (2024-08-07)
+
+
+### Features
+
+* suspend statefulset until iam probe job completes ([#13](https://github.com/statisticsnorway/ssbucketeer/issues/13)) ([5a39707](https://github.com/statisticsnorway/ssbucketeer/commit/5a397075486ceed34cc23e2115821f9f406da614))
+
 ## [0.0.9](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.8...v0.0.9) (2024-08-05)
 
 
