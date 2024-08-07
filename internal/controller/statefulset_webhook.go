@@ -14,7 +14,9 @@ import (
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -114,6 +116,49 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	}
 
 	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts)
+
+	if sfs.Annotations[probeCompletedAnnotation] != "true" {
+		sfs.Spec.Replicas = ptr[int32](0)
+
+		probeJob := &batchv1.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
+				Namespace: sfs.Namespace,
+				Annotations: map[string]string{
+					probeJobStatefulsetAnnotation: sfs.Name,
+				},
+			},
+			Spec: batchv1.JobSpec{
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							istioExcludedIpRangesAnnotation: gcsfuseOutboundIPRange,
+						},
+					},
+					Spec: corev1.PodSpec{
+						ServiceAccountName: sfs.Spec.Template.Spec.ServiceAccountName,
+						Containers: []corev1.Container{
+							{
+								Image:   "europe-north1-docker.pkg.dev/artifact-registry-5n/dapla-lab-docker/alpine-curl:1.0.0",
+								Name:    "iam-probe",
+								Command: []string{"sh"},
+								Args: []string{
+									"-c",
+									"until curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done; curl -fsI -X POST http://localhost:15020/quitquitquit; exit 0",
+								},
+							},
+						},
+						RestartPolicy: corev1.RestartPolicyNever,
+					},
+				},
+			},
+		}
+
+		if err := m.Client.Create(ctx, probeJob); err != nil {
+			log.Error(err, "could not create probe job")
+		}
+
+	}
 
 	marshaledStatefulSet, err := json.Marshal(sfs)
 	if err != nil {
