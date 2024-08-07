@@ -139,12 +139,12 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 						ServiceAccountName: sfs.Spec.Template.Spec.ServiceAccountName,
 						Containers: []corev1.Container{
 							{
-								Image:   "busybox:1.28",
+								Image:   "europe-north1-docker.pkg.dev/artifact-registry-5n/dapla-lab-docker/alpine-curl:1.0.0",
 								Name:    "iam-probe",
 								Command: []string{"sh"},
 								Args: []string{
 									"-c",
-									"until wget --header 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done; curl -fsI -X POST http://localhost:15020/quitquitquit",
+									"until curl -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done; curl -fsI -X POST http://localhost:15020/quitquitquit",
 								},
 							},
 						},
