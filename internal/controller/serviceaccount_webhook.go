@@ -17,6 +17,24 @@ import (
 
 var _ webhook.CustomValidator = (*ServiceAccountValidator)(nil)
 
+type IllegalImpersionationError struct {
+	User           string
+	RequestedGroup string
+}
+
+func (e IllegalImpersionationError) Error() string {
+	return fmt.Sprintf("user %q tried to impersonate group %q, which they are not a member of", e.User, e.RequestedGroup)
+}
+
+type IllegalNamespaceError struct {
+	Namespace      string
+	RequestedGroup string
+}
+
+func (e IllegalNamespaceError) Error() string {
+	return fmt.Sprintf("attempted to impersonate group %q from non-user namespace %q", e.RequestedGroup, e.Namespace)
+}
+
 type ServiceAccountValidator struct {
 	Auth Auther
 }
@@ -57,7 +75,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 
 	user := strings.TrimPrefix(sa.Namespace, userNamespacePrefix)
 	if user == sa.Namespace {
-		err := fmt.Errorf("attempted to impersonate group %q from non-user namespace %q", group, sa.Namespace)
+		err := IllegalNamespaceError{Namespace: sa.Namespace, RequestedGroup: group}
 		log.Error(err, "attempt to impersonate group from non-user namespace")
 		return nil, err
 	}
@@ -69,7 +87,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 	}
 
 	if !isMember {
-		err := fmt.Errorf("user %q is not a member of group %q", user, group)
+		err := IllegalImpersionationError{User: user, RequestedGroup: group}
 		log.Error(err, "user tried to impersonate a group they are not a member of")
 		return nil, err
 	}
