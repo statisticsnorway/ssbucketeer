@@ -77,6 +77,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	sfs.Spec.Replicas = ptr[int32](1)
+	sfs.Annotations[probeCompletedAnnotation] = "true"
 
 	if err := r.Update(ctx, &sfs); err != nil {
 		log.Error(err, "could not update StatefulSet")

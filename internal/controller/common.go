@@ -9,6 +9,7 @@ const (
 	mountStandardBucketsAnnotation = "dapla.ssb.no/mount-standard-buckets"
 	serviceContainerAnnotation     = "dapla.ssb.no/service-container-name"
 	probeJobStatefulsetAnnotation  = "dapla.ssb.no/statefulset-probe-name"
+	probeCompletedAnnotation       = "dapla.ssb.no/iam-probe-completed"
 
 	alphaTestNamespace = "user-ssb-kons-stolen"
 

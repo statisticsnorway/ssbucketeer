@@ -117,7 +117,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts)
 
-	if sfs.Namespace == alphaTestNamespace {
+	if sfs.Namespace == alphaTestNamespace && sfs.Annotations[probeCompletedAnnotation] != "true" {
 		sfs.Spec.Replicas = ptr[int32](0)
 
 		probeJob := &batchv1.Job{
@@ -144,7 +144,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 								Command: []string{"sh"},
 								Args: []string{
 									"-c",
-									"until wget --header 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done",
+									"until wget --header 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done; curl -fsI -X POST http://localhost:15020/quitquitquit",
 								},
 							},
 						},
