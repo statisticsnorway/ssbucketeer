@@ -144,7 +144,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 								Command: []string{"sh"},
 								Args: []string{
 									"-c",
-									"until curl -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done; curl -fsI -X POST http://localhost:15020/quitquitquit",
+									"until curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done; curl -fsI -X POST http://localhost:15020/quitquitquit",
 								},
 							},
 						},
