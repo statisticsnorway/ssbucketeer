@@ -193,6 +193,7 @@ func main() {
 			Folders:           foldersClient,
 			TeamsFolderNumber: cfg.TeamsFolderNumber,
 			Stage:             cfg.Stage,
+			IamProbeImage:     cfg.IamProbeImage,
 		}).SetupWithManager(mgr)
 
 		if err = (&controller.ServiceAccountValidator{
