@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.12](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.11...v0.0.12) (2024-08-08)
+
+
+### Features
+
+* add iam-probe dockerfile, change location to europe-west4 ([#17](https://github.com/statisticsnorway/ssbucketeer/issues/17)) ([1e8c637](https://github.com/statisticsnorway/ssbucketeer/commit/1e8c637cc2ce65307a2e53c9cc7127d79c2ff33d))
+
 ## [0.0.11](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.10...v0.0.11) (2024-08-08)
 
 
