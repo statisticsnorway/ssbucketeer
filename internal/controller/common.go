@@ -12,6 +12,7 @@ const (
 	probeJobStatefulsetAnnotation = "dapla.ssb.no/statefulset-probe-name"
 	iamProbeStatus                = "dapla.ssb.no/iam-probe-completed"
 	iamProbeRunningPrefix         = "running-replicas-"
+	iamProbeDone                  = "done"
 
 	istioExcludedIpRangesAnnotation = "traffic.sidecar.istio.io/excludeOutboundIPRanges"
 	gcsfuseOutboundIPRange          = "169.254.169.254/32"

@@ -86,7 +86,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	sfs.Spec.Replicas = ptr[int32](int32(replicas))
-	sfs.Annotations[iamProbeStatus] = "true"
+	sfs.Annotations[iamProbeStatus] = iamProbeDone
 
 	if err := r.Update(ctx, &sfs); err != nil {
 		if apierrors.IsConflict(err) {

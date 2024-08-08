@@ -118,7 +118,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts)
 
-	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != "done" {
+	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
 		sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
 		sfs.Spec.Replicas = ptr[int32](0)
 
