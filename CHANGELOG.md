@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.11](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.10...v0.0.11) (2024-08-08)
+
+
+### Bug Fixes
+
+* restore correct number of replicas ([#15](https://github.com/statisticsnorway/ssbucketeer/issues/15)) ([e842f6a](https://github.com/statisticsnorway/ssbucketeer/commit/e842f6a96a51b756f2d31f4f13a6d0ef2dc77046))
+
 ## [0.0.10](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.9...v0.0.10) (2024-08-07)
 
 
