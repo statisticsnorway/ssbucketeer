@@ -52,6 +52,7 @@ type config struct {
 	DaplaGroupSaProjectId string `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
 	TeamsFolderNumber     string `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
 	Stage                 string `env:"STAGE,required,notEmpty"`
+	IamProbeImage         string `env:"IAM_PROBE_IMAGE"`
 }
 
 var (

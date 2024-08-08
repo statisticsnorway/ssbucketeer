@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -76,8 +78,15 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	sfs.Spec.Replicas = ptr[int32](1)
-	sfs.Annotations[probeCompletedAnnotation] = "true"
+	replicasStr := strings.TrimPrefix(sfs.Annotations[iamProbeStatus], iamProbeRunningPrefix)
+	replicas, err := strconv.Atoi(replicasStr)
+	if err != nil {
+		log.Error(err, "invalid iamProbeStatus %q, defaulting to 1 replica")
+		replicas = 1
+	}
+
+	sfs.Spec.Replicas = ptr[int32](int32(replicas))
+	sfs.Annotations[iamProbeStatus] = "true"
 
 	if err := r.Update(ctx, &sfs); err != nil {
 		if apierrors.IsConflict(err) {

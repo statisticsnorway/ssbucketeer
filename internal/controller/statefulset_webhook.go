@@ -44,6 +44,7 @@ type StatefulsetMutator struct {
 
 	TeamsFolderNumber string
 	Stage             string
+	IamProbeImage     string
 }
 
 var groupSuffixes = []string{"-developers", "-data-admins"}
@@ -117,7 +118,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts)
 
-	if sfs.Annotations[probeCompletedAnnotation] != "true" {
+	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != "done" {
+		sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
 		sfs.Spec.Replicas = ptr[int32](0)
 
 		probeJob := &batchv1.Job{
@@ -139,13 +141,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 						ServiceAccountName: sfs.Spec.Template.Spec.ServiceAccountName,
 						Containers: []corev1.Container{
 							{
-								Image:   "europe-north1-docker.pkg.dev/artifact-registry-5n/dapla-lab-docker/alpine-curl:1.0.0",
-								Name:    "iam-probe",
-								Command: []string{"sh"},
-								Args: []string{
-									"-c",
-									"until curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2s; done; curl -fsI -X POST http://localhost:15020/quitquitquit; exit 0",
-								},
+								Image: m.IamProbeImage,
+								Name:  "iam-probe",
 							},
 						},
 						RestartPolicy: corev1.RestartPolicyNever,
