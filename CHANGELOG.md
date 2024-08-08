@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.13](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.12...v0.0.13) (2024-08-08)
+
+
+### Bug Fixes
+
+* pass iam probe image name to statefulset webhook ([b7f2c34](https://github.com/statisticsnorway/ssbucketeer/commit/b7f2c3483736fcd5f41b3d28535936be5a2c4ea1))
+
 ## [0.0.12](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.11...v0.0.12) (2024-08-08)
 
 
