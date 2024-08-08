@@ -8,8 +8,11 @@ const (
 	mountBucketsAnnotation         = "dapla.ssb.no/mount-buckets"
 	mountStandardBucketsAnnotation = "dapla.ssb.no/mount-standard-buckets"
 	serviceContainerAnnotation     = "dapla.ssb.no/service-container-name"
-	probeJobStatefulsetAnnotation  = "dapla.ssb.no/statefulset-probe-name"
-	probeCompletedAnnotation       = "dapla.ssb.no/iam-probe-completed"
+
+	probeJobStatefulsetAnnotation = "dapla.ssb.no/statefulset-probe-name"
+	iamProbeStatus                = "dapla.ssb.no/iam-probe-completed"
+	iamProbeRunningPrefix         = "running-replicas-"
+	iamProbeDone                  = "done"
 
 	istioExcludedIpRangesAnnotation = "traffic.sidecar.istio.io/excludeOutboundIPRanges"
 	gcsfuseOutboundIPRange          = "169.254.169.254/32"
