@@ -1,28 +1,22 @@
-name: Build
+name: Build IAM Probe
 
 on:
   push:
     branches:
       - "**"
     paths:
-      - "Dockerfile"
-      - "go.mod"
-      - "go.sum"
-      - "**/*.go"
-      - ".github/workflows/build.yml"
+      - "Dockerfile.iam-probe"
+      - ".github/workflows/build-iam-probe.yml"
     tags:
       - "*"
   pull_request:
     paths:
-      - "Dockerfile"
-      - "go.mod"
-      - "go.sum"
-      - "**/*.go"
-      - ".github/workflows/build.yml"
+      - "Dockerfile.iam-probe"
+      - ".github/workflows/build-iam-probe.yml"
 
 env:
   REGISTRY: europe-west4-docker.pkg.dev/artifact-registry-5n/dapla-lab-docker/dapla
-  IMAGE: ssbucketeer
+  IMAGE: ssbucketeer-iam-probe
   TAG: ${{ github.ref_name }}-${{ github.sha }}
 
 jobs:
@@ -73,7 +67,7 @@ jobs:
         with:
           context: .
           platforms: ${{ env.PLATFORMS }}
-          file: Dockerfile
+          file: Dockerfile.iam-probe
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ steps.metadata.outputs.tags }}
