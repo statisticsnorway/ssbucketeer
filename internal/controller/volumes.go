@@ -71,7 +71,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 	if !slices.ContainsFunc(podspec.Containers, func(c corev1.Container) bool {
 		return c.Name == precreator.Name
 	}) {
-		podspec.InitContainers = append(podspec.Containers, precreator)
+		podspec.Containers = append(podspec.Containers, precreator)
 	}
 
 	if len(volumes) > 0 {
