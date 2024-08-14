@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.15](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.14...v0.0.15) (2024-08-14)
+
+
+### Bug Fixes
+
+* start precreator as normal container ([b657e29](https://github.com/statisticsnorway/ssbucketeer/commit/b657e29ceee4b814088856827b326b8ab08db68b))
+
 ## [0.0.14](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.13...v0.0.14) (2024-08-14)
 
 
