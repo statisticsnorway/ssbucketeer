@@ -68,10 +68,10 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 			MountPath: fmt.Sprintf("/buckets/%s", bucket),
 		})
 	}
-	if !slices.ContainsFunc(podspec.InitContainers, func(c corev1.Container) bool {
+	if !slices.ContainsFunc(podspec.Containers, func(c corev1.Container) bool {
 		return c.Name == precreator.Name
 	}) {
-		podspec.InitContainers = append(podspec.InitContainers, precreator)
+		podspec.InitContainers = append(podspec.Containers, precreator)
 	}
 
 	if len(volumes) > 0 {
