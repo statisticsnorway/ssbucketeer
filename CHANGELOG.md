@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.16](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.15...v0.0.16) (2024-08-14)
+
+
+### Bug Fixes
+
+* append to containers, not initContainers ([a325e24](https://github.com/statisticsnorway/ssbucketeer/commit/a325e248f7064eda200c0b1114c355663c10e34f))
+
 ## [0.0.15](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.14...v0.0.15) (2024-08-14)
 
 
