@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"os"
+	"os/signal"
 	"path"
+	"syscall"
 
 	"cloud.google.com/go/storage"
 	"golang.org/x/exp/maps"
@@ -24,6 +26,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGTERM, syscall.SIGINT)
+	<-shutdown
 }
 
 type Precreator struct {
