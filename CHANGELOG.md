@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.14](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.13...v0.0.14) (2024-08-14)
+
+
+### Features
+
+* folder precreator init container ([#20](https://github.com/statisticsnorway/ssbucketeer/issues/20)) ([572d94b](https://github.com/statisticsnorway/ssbucketeer/commit/572d94ba8cbd78b777ed16404c88539ef010dbb8))
+
 ## [0.0.13](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.12...v0.0.13) (2024-08-08)
 
 
