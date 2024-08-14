@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.17](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.16...v0.0.17) (2024-08-14)
+
+
+### Bug Fixes
+
+* make precreator wait for kill signal ([db72701](https://github.com/statisticsnorway/ssbucketeer/commit/db727018af198aac5541a25aa205bd94c6c88d1c))
+
 ## [0.0.16](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.15...v0.0.16) (2024-08-14)
 
 
