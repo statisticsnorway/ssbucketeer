@@ -1,0 +1,19 @@
+FROM golang:1.22.2-alpine AS build
+
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /app
+
+COPY ./go.mod ./go.sum ./
+RUN go mod download && go mod verify
+
+COPY ./cmd/folder-precreator ./cmd
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -ldflags="-s -w" -o precreator cmd/main.go
+
+FROM gcr.io/distroless/static-debian11:22cd078ffac95e35015f052c95447afd0d2818e7
+USER nonroot
+
+COPY --from=build /app/precreator /precreator
+
+CMD ["/precreator"]

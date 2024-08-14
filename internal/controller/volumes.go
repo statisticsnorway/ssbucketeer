@@ -24,7 +24,7 @@ func volumeMountNameIs(name string) func(v corev1.VolumeMount) bool {
 	}
 }
 
-func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, bucketMounts map[string]string) (shouldUpdate bool) {
+func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, bucketMounts map[string]string, precreatorImage string) (shouldUpdate bool) {
 	volumes := make([]corev1.Volume, 0, len(bucketMounts))
 	volumeMounts := make([]corev1.VolumeMount, 0, len(bucketMounts))
 	for mountPoint, bucket := range bucketMounts {
@@ -55,6 +55,23 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 				ReadOnly:  false,
 			})
 		}
+	}
+
+	precreator := corev1.Container{
+		Image: precreatorImage,
+		Name:  "bucket-folders-precreator",
+	}
+	for mountPoint, bucket := range bucketMounts {
+		volumeName := fmt.Sprintf("gcsfuse-%s", mountPoint)
+		precreator.VolumeMounts = append(precreator.VolumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: fmt.Sprintf("/buckets/%s", bucket),
+		})
+	}
+	if !slices.ContainsFunc(podspec.InitContainers, func(c corev1.Container) bool {
+		return c.Name == precreator.Name
+	}) {
+		podspec.InitContainers = append(podspec.InitContainers, precreator)
 	}
 
 	if len(volumes) > 0 {

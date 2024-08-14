@@ -45,6 +45,7 @@ type StatefulsetMutator struct {
 	TeamsFolderNumber string
 	Stage             string
 	IamProbeImage     string
+	PrecreatorImage   string
 }
 
 var groupSuffixes = []string{"-developers", "-data-admins"}
@@ -116,7 +117,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 	}
 
-	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts)
+	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts, m.PrecreatorImage)
 
 	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
 		sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
