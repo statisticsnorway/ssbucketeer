@@ -53,6 +53,7 @@ type config struct {
 	TeamsFolderNumber     string `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
 	Stage                 string `env:"STAGE,required,notEmpty"`
 	IamProbeImage         string `env:"IAM_PROBE_IMAGE"`
+	PrecreatorImage       string `env:"PRECREATOR_IMAGE"`
 }
 
 var (
@@ -194,6 +195,7 @@ func main() {
 			TeamsFolderNumber: cfg.TeamsFolderNumber,
 			Stage:             cfg.Stage,
 			IamProbeImage:     cfg.IamProbeImage,
+			PrecreatorImage:   cfg.PrecreatorImage,
 		}).SetupWithManager(mgr)
 
 		if err = (&controller.ServiceAccountValidator{
