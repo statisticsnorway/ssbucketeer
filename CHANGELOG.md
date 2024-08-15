@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.19](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.18...v0.0.19) (2024-08-15)
+
+
+### Bug Fixes
+
+* update dependencies ([0500003](https://github.com/statisticsnorway/ssbucketeer/commit/05000032d4c4e471880dc37c4a36bc996277778a))
+
 ## [0.0.18](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.17...v0.0.18) (2024-08-15)
 
 
