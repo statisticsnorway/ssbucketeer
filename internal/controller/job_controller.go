@@ -78,6 +78,14 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
+	if sfs.Annotations[iamProbeStatus] == iamProbeDone {
+		err := client.IgnoreNotFound(r.Delete(ctx, &job))
+		if err != nil {
+			log.Error(err, "failed to queue job deletion")
+		}
+		return ctrl.Result{}, err
+	}
+
 	replicasStr := strings.TrimPrefix(sfs.Annotations[iamProbeStatus], iamProbeRunningPrefix)
 	replicas, err := strconv.Atoi(replicasStr)
 	if err != nil {

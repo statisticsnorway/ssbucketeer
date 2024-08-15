@@ -36,7 +36,7 @@ var _ admission.Handler = (*StatefulsetMutator)(nil)
 
 type StatefulsetMutator struct {
 	Client  client.Client
-	Decoder *admission.Decoder
+	Decoder admission.Decoder
 
 	Storage  *storage.Client
 	Projects *rm.ProjectsClient
