@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.18](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.17...v0.0.18) (2024-08-15)
+
+
+### Bug Fixes
+
+* don't parse iamProbeStatus if it is done ([dd4f19f](https://github.com/statisticsnorway/ssbucketeer/commit/dd4f19feccf794e4413fcf88b58aa64346306dc0))
+
 ## [0.0.17](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.16...v0.0.17) (2024-08-14)
 
 
