@@ -57,23 +57,6 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 		}
 	}
 
-	precreator := corev1.Container{
-		Image: precreatorImage,
-		Name:  "bucket-folders-precreator",
-	}
-	for mountPoint, bucket := range bucketMounts {
-		volumeName := fmt.Sprintf("gcsfuse-%s", mountPoint)
-		precreator.VolumeMounts = append(precreator.VolumeMounts, corev1.VolumeMount{
-			Name:      volumeName,
-			MountPath: fmt.Sprintf("/buckets/%s", bucket),
-		})
-	}
-	if !slices.ContainsFunc(podspec.Containers, func(c corev1.Container) bool {
-		return c.Name == precreator.Name
-	}) {
-		podspec.Containers = append(podspec.Containers, precreator)
-	}
-
 	if len(volumes) > 0 {
 		podspec.Volumes = append(podspec.Volumes, volumes...)
 	}
@@ -81,5 +64,26 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 		container.VolumeMounts = append(container.VolumeMounts, volumeMounts...)
 	}
 
-	return len(volumes) > 0 || len(volumeMounts) > 0
+	modified := len(volumes) > 0 || len(volumeMounts) > 0
+
+	if modified {
+		precreator := corev1.Container{
+			Image: precreatorImage,
+			Name:  "bucket-folders-precreator",
+		}
+		for mountPoint, bucket := range bucketMounts {
+			volumeName := fmt.Sprintf("gcsfuse-%s", mountPoint)
+			precreator.VolumeMounts = append(precreator.VolumeMounts, corev1.VolumeMount{
+				Name:      volumeName,
+				MountPath: fmt.Sprintf("/buckets/%s", bucket),
+			})
+		}
+		if !slices.ContainsFunc(podspec.Containers, func(c corev1.Container) bool {
+			return c.Name == precreator.Name
+		}) {
+			podspec.Containers = append(podspec.Containers, precreator)
+		}
+	}
+
+	return modified
 }
