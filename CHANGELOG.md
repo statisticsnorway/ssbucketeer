@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.21](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.20...v0.0.21) (2024-08-16)
+
+
+### Features
+
+* inject a marker env var when a group is impersonated ([#29](https://github.com/statisticsnorway/ssbucketeer/issues/29)) ([5fc8d40](https://github.com/statisticsnorway/ssbucketeer/commit/5fc8d40c673d2ff47459ebab78487c6b643e9200))
+
 ## [0.0.20](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.19...v0.0.20) (2024-08-16)
 
 
