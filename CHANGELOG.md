@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.20](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.19...v0.0.20) (2024-08-16)
+
+
+### Bug Fixes
+
+* skip precreator sidecar if no buckets are mounted ([#27](https://github.com/statisticsnorway/ssbucketeer/issues/27)) ([4a3271e](https://github.com/statisticsnorway/ssbucketeer/commit/4a3271e68f181ecf1865c0b3a5bfcbf2ca66111f))
+
 ## [0.0.19](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.18...v0.0.19) (2024-08-15)
 
 
