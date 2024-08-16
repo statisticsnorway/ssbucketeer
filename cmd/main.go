@@ -54,6 +54,7 @@ type config struct {
 	Stage                 string `env:"STAGE,required,notEmpty"`
 	IamProbeImage         string `env:"IAM_PROBE_IMAGE"`
 	PrecreatorImage       string `env:"PRECREATOR_IMAGE"`
+	ADCGroupEnvName       string `env:"ADC_GROUP_ENV_NAME"`
 }
 
 var (
@@ -196,6 +197,7 @@ func main() {
 			Stage:             cfg.Stage,
 			IamProbeImage:     cfg.IamProbeImage,
 			PrecreatorImage:   cfg.PrecreatorImage,
+			ADCGroupEnvName:   cfg.ADCGroupEnvName,
 		}).SetupWithManager(mgr)
 
 		if err = (&controller.ServiceAccountValidator{
