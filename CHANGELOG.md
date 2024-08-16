@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.22](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.21...v0.0.22) (2024-08-16)
+
+
+### Bug Fixes
+
+* give jobs a time-to-live so their pods always get deleted ([#31](https://github.com/statisticsnorway/ssbucketeer/issues/31)) ([ae064f0](https://github.com/statisticsnorway/ssbucketeer/commit/ae064f070a6e30bc22d3b6e5e57e0663222fd4d8))
+
 ## [0.0.21](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.20...v0.0.21) (2024-08-16)
 
 
