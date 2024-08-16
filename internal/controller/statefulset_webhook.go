@@ -46,6 +46,7 @@ type StatefulsetMutator struct {
 	Stage             string
 	IamProbeImage     string
 	PrecreatorImage   string
+	ADCGroupEnvName   string
 }
 
 var groupSuffixes = []string{"-developers", "-data-admins"}
@@ -76,6 +77,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			log.Error(err, "handle serviceaccount")
 			return admission.Denied("error handling service account")
 		}
+
 	}
 
 	// 2. Mount buckets
@@ -93,6 +95,11 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		err := fmt.Errorf("could not find container with name %q", sfs.Annotations[serviceContainerAnnotation])
 		log.Error(err, "could not find service container")
 		return admission.Errored(http.StatusBadRequest, err)
+	}
+
+	if hasGroupAnnotation && m.ADCGroupEnvName != "" {
+		containerEnv := &sfs.Spec.Template.Spec.Containers[containerIndex].Env
+		*containerEnv = append(*containerEnv, corev1.EnvVar{Name: m.ADCGroupEnvName, Value: group})
 	}
 
 	bucketMounts := make(map[string]string, len(bucketNames))
