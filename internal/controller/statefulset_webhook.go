@@ -139,6 +139,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 				},
 			},
 			Spec: batchv1.JobSpec{
+				ActiveDeadlineSeconds:   ptr[int64](300),
+				TTLSecondsAfterFinished: ptr[int32](0),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
