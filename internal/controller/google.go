@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"strings"
 
 	"google.golang.org/api/cloudidentity/v1"
 )
@@ -22,9 +23,19 @@ func (a *GoogleAuther) UserIsMemberOf(user, group string) (bool, error) {
 	isMemberResponse, err := a.Ci.Groups.Memberships.
 		CheckTransitiveMembership(groupResponse.Name).
 		Query(fmt.Sprintf("member_key_id == '%s'", userEmail)).Do()
-	if err != nil {
-		return false, err
+	if err == nil {
+		return isMemberResponse.HasMembership, nil
 	}
 
-	return isMemberResponse.HasMembership, nil
+	if strings.Contains(user, "kons") {
+		user = strings.Replace(userEmail, "-", "_", 1)
+		isMemberResponse, err = a.Ci.Groups.Memberships.
+			CheckTransitiveMembership(groupResponse.Name).
+			Query(fmt.Sprintf("member_key_id == '%s'", userEmail)).Do()
+		if err == nil {
+			return isMemberResponse.HasMembership, nil
+		}
+	}
+
+	return false, err
 }
