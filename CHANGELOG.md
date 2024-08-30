@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.23](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.22...v0.0.23) (2024-08-30)
+
+
+### Features
+
+* Retry if the user name is kons ([#33](https://github.com/statisticsnorway/ssbucketeer/issues/33)) ([3e4a58a](https://github.com/statisticsnorway/ssbucketeer/commit/3e4a58a2549d01bf23fd33e4217c1164a90c97e8))
+
 ## [0.0.22](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.21...v0.0.22) (2024-08-16)
 
 
