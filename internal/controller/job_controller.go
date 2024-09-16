@@ -62,22 +62,25 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
+	// If the Job does not have this annotation, it is not relevant to us
 	sfsName, ok := job.Annotations[probeJobStatefulsetAnnotation]
 	if !ok {
 		return ctrl.Result{}, nil
 	}
 
+	// The job has not completed, and so we have nothing to do
 	if job.Status.CompletionTime.IsZero() {
-		log.Info("job not complete yet")
 		return ctrl.Result{}, nil
 	}
 
+	// Get the StatefulSet the IAM probe job was spawned for
 	var sfs appsv1.StatefulSet
 	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: sfsName}, &sfs); err != nil {
 		log.Error(err, "could not get StatefulSet")
 		return ctrl.Result{}, err
 	}
 
+	// If the job status is `done`, we want to delete this job
 	if sfs.Annotations[iamProbeStatus] == iamProbeDone {
 		err := client.IgnoreNotFound(r.Delete(ctx, &job))
 		if err != nil {
@@ -86,6 +89,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
+	// Parse the IAM probe status to find the original replica count
 	replicasStr := strings.TrimPrefix(sfs.Annotations[iamProbeStatus], iamProbeRunningPrefix)
 	replicas, err := strconv.Atoi(replicasStr)
 	if err != nil {
