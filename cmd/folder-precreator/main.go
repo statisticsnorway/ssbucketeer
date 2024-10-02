@@ -5,11 +5,13 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 	"syscall"
 
 	"cloud.google.com/go/storage"
 	"golang.org/x/exp/maps"
 	"google.golang.org/api/iterator"
+	"k8s.io/utils/strings/slices"
 )
 
 func main() {
@@ -96,6 +98,11 @@ func (c *Precreator) ListBucketFolders(ctx context.Context, bucket string) ([]st
 
 		names[path.Dir(attrs.Name)] = struct{}{}
 	}
+
+	// Filter out all folders beginning with storage-transfer/j
+	filteredFolders := slices.Filter(nil, maps.Keys(names), func(folder string) bool {
+		strings.HasPrefix(folder, "storage-transfer/")
+	})
 
 	return maps.Keys(names), nil
 }
