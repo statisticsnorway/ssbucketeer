@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.25](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.24...v0.0.25) (2024-10-02)
+
+
+### Bug Fixes
+
+* **precreator:** add missing return ([e78c8aa](https://github.com/statisticsnorway/ssbucketeer/commit/e78c8aa18ecedd9fc293456b356cba806470ea2b))
+
 ## [0.0.24](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.23...v0.0.24) (2024-10-02)
 
 
