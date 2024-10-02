@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.24](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.23...v0.0.24) (2024-10-02)
+
+
+### Bug Fixes
+
+* **pre-creator:** ignore paths with storage-transfer prefix ([22e0679](https://github.com/statisticsnorway/ssbucketeer/commit/22e0679b841fb77b2ee3d0e33caca54460401712))
+
 ## [0.0.23](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.22...v0.0.23) (2024-08-30)
 
 
