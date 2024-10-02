@@ -99,10 +99,10 @@ func (c *Precreator) ListBucketFolders(ctx context.Context, bucket string) ([]st
 		names[path.Dir(attrs.Name)] = struct{}{}
 	}
 
-	// Filter out all folders beginning with storage-transfer/j
+	// Filter out all folders beginning with storage-transfer/
 	filteredFolders := slices.Filter(nil, maps.Keys(names), func(folder string) bool {
-		strings.HasPrefix(folder, "storage-transfer/")
+		return !strings.HasPrefix(folder, "storage-transfer/")
 	})
 
-	return maps.Keys(names), nil
+	return filteredFolders, nil
 }
