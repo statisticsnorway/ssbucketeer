@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.26](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.25...v0.0.26) (2024-10-03)
+
+
+### Bug Fixes
+
+* remove panic-on-error in main ([#38](https://github.com/statisticsnorway/ssbucketeer/issues/38)) ([fab6846](https://github.com/statisticsnorway/ssbucketeer/commit/fab68466cdc0def0d2f66ab60ca976297d96c261))
+
 ## [0.0.25](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.24...v0.0.25) (2024-10-02)
 
 
