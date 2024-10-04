@@ -49,7 +49,19 @@ type StatefulsetMutator struct {
 	ADCGroupEnvName   string
 }
 
-var groupSuffixes = []string{"-developers", "-data-admins"}
+var groupTypes = []struct {
+	Suffix     string
+	SourceData bool
+}{
+	{
+		Suffix:     "-developers",
+		SourceData: false,
+	},
+	{
+		Suffix:     "-data-admins",
+		SourceData: true,
+	},
+}
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register("/mutate-apps-v1-statefulset", &admission.Webhook{Handler: m})
@@ -110,10 +122,10 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	// TODO: Use Dapla Team API for this?
 	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
 		team := group
-		for _, suffix := range groupSuffixes {
-			team = strings.TrimSuffix(group, suffix)
+		for _, groupType := range groupTypes {
+			team = strings.TrimSuffix(group, groupType.Suffix)
 			if team != group {
-				if err := m.addStandardBuckets(ctx, team, bucketMounts); err != nil {
+				if err := m.addStandardBuckets(ctx, team, groupType.SourceData, bucketMounts); err != nil {
 					log.Error(err, "failed to add standard buckets")
 				}
 				break
@@ -208,11 +220,7 @@ func getFolderWithDisplayName(it *rm.FolderIterator, displayName string) (*rmpb.
 	}
 }
 
-func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string, bucketMounts map[string]string) error {
-	// teamFolderIt := m.Folders.SearchFolders(ctx, &rmpb.SearchFoldersRequest{
-	// 	Query: fmt.Sprintf(`parent=folders/%s AND state=ACTIVE AND displayName=%s`, m.TeamsFolderNumber, team),
-	// })
-
+func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string, sourceData bool, bucketMounts map[string]string) error {
 	teamFolderIt := m.Folders.ListFolders(ctx, &rmpb.ListFoldersRequest{
 		Parent: fmt.Sprintf("folders/%s", m.TeamsFolderNumber),
 	})
@@ -224,8 +232,13 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 		return fmt.Errorf("get folder %q: %w", team, err)
 	}
 
+	baseProjectName := team
+	if sourceData {
+		baseProjectName = fmt.Sprintf("%s-kilde", baseProjectName)
+	}
+
 	projectIt := m.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
-		Query: fmt.Sprintf(`parent=%s AND state=ACTIVE AND displayName=%s`, folder.Name, fmt.Sprintf("%s-%s", team, string(m.Stage[0]))),
+		Query: fmt.Sprintf(`parent=%s AND state=ACTIVE AND displayName=%s`, folder.Name, fmt.Sprintf("%s-%s", baseProjectName, string(m.Stage[0]))),
 	})
 
 	project, err := projectIt.Next()
