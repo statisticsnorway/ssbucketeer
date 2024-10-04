@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.27](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.26...v0.0.27) (2024-10-04)
+
+
+### Features
+
+* support mounting source data buckets ([#40](https://github.com/statisticsnorway/ssbucketeer/issues/40)) ([9a26a6c](https://github.com/statisticsnorway/ssbucketeer/commit/9a26a6c553d261a9036477e6667a4e038c2d1832))
+
 ## [0.0.26](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.25...v0.0.26) (2024-10-03)
 
 
