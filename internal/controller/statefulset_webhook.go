@@ -111,7 +111,11 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	if hasGroupAnnotation && m.ADCGroupEnvName != "" {
 		containerEnv := &sfs.Spec.Template.Spec.Containers[containerIndex].Env
-		*containerEnv = append(*containerEnv, corev1.EnvVar{Name: m.ADCGroupEnvName, Value: group})
+		if !slices.ContainsFunc(*containerEnv, func(e corev1.EnvVar) bool {
+			return e.Name == m.ADCGroupEnvName
+		}) {
+			*containerEnv = append(*containerEnv, corev1.EnvVar{Name: m.ADCGroupEnvName, Value: group})
+		}
 	}
 
 	bucketMounts := make(map[string]string, len(bucketNames))
