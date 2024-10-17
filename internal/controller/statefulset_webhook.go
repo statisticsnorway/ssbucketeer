@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	rm "cloud.google.com/go/resourcemanager/apiv3"
 	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -47,20 +49,24 @@ type StatefulsetMutator struct {
 	IamProbeImage     string
 	PrecreatorImage   string
 	ADCGroupEnvName   string
+
+	GroupConfigs []AccessGroupConfig
 }
 
-var groupTypes = []struct {
-	Suffix     string
-	SourceData bool
-}{
-	{
-		Suffix:     "-developers",
-		SourceData: false,
-	},
-	{
-		Suffix:     "-data-admins",
-		SourceData: true,
-	},
+type AccessGroupConfig struct {
+	Name               string        `yaml:"name"`
+	ProjectTemplate    string        `yaml:"projectTemplate"`
+	MaxServiceDuration time.Duration `yaml:"maxServiceDuration"`
+	ReasonRequired     bool          `yaml:"reasonRequired"`
+}
+
+func parseAccessGroupConfigs(value string) ([]AccessGroupConfig, error) {
+	var configs []AccessGroupConfig
+	err := yaml.Unmarshal([]byte(value), &configs)
+	if err != nil {
+		return nil, err
+	}
+	return configs, nil
 }
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
@@ -84,12 +90,34 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	// 1. Check if we want to impersonate a group SA
 	group, hasGroupAnnotation := sfs.Annotations[impersonateGroupAnnotation]
 	if hasGroupAnnotation {
+		var groupConfig *AccessGroupConfig
+		for _, config := range m.GroupConfigs {
+			if config.Name == group {
+				groupConfig = &config
+				break
+			}
+		}
+
+		if groupConfig == nil {
+			return admission.Denied(fmt.Sprintf("No configuration found for group: %s", group))
+		}
+
+		if groupConfig.ReasonRequired {
+			reason, hasReason := sfs.Annotations["reason"]
+			if !hasReason || reason == "" {
+				return admission.Denied(fmt.Sprintf("Reason is required for access group: %s", group))
+			}
+		}
+
+		if groupConfig.MaxServiceDuration > 0 {
+			sfs.Annotations["max-service-duration"] = groupConfig.MaxServiceDuration.String()
+		}
+
 		// Handle IAM bindings and k8s SA annotations
 		if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, group); err != nil {
 			log.Error(err, "handle serviceaccount")
 			return admission.Denied("error handling service account")
 		}
-
 	}
 
 	// 2. Mount buckets
@@ -144,7 +172,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
 		sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
-		sfs.Spec.Replicas = ptr[int32](0)
+		sfs.Spec.Replicas = ptr
 
 		probeJob := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -155,8 +183,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 				},
 			},
 			Spec: batchv1.JobSpec{
-				ActiveDeadlineSeconds:   ptr[int64](300),
-				TTLSecondsAfterFinished: ptr[int32](0),
+				ActiveDeadlineSeconds:   ptr,
+				TTLSecondsAfterFinished: ptr,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
