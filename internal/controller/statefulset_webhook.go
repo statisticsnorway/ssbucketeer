@@ -99,13 +99,13 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 
 		if groupConfig == nil {
-			return admission.Denied(fmt.Sprintf("No configuration found for group: %s", group))
+			return admission.Denied(fmt.Sprintf("no configuration found for group: %s", group))
 		}
 
 		if groupConfig.ReasonRequired {
 			reason, hasReason := sfs.Annotations["reason"]
 			if !hasReason || reason == "" {
-				return admission.Denied(fmt.Sprintf("Reason is required for access group: %s", group))
+				return admission.Denied(fmt.Sprintf("reason is required for access group: %s", group))
 			}
 		}
 
