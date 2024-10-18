@@ -110,7 +110,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 
 		if groupConfig.MaxServiceDuration > 0 {
-			sfs.Annotations["max-service-duration"] = groupConfig.MaxServiceDuration.String()
+			sfs.Annotations[MaxServiceDurationAnnotation] = groupConfig.MaxServiceDuration.String()
 		}
 
 		// Handle IAM bindings and k8s SA annotations
