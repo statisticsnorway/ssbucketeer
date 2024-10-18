@@ -172,7 +172,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
 		sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
-		sfs.Spec.Replicas = ptr
+		sfs.Spec.Replicas = ptr[int32](0)
 
 		probeJob := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -183,8 +183,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 				},
 			},
 			Spec: batchv1.JobSpec{
-				ActiveDeadlineSeconds:   ptr,
-				TTLSecondsAfterFinished: ptr,
+				ActiveDeadlineSeconds:   ptr[int64](300),
+				TTLSecondsAfterFinished: ptr[int32](0),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
