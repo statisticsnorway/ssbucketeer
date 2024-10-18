@@ -62,8 +62,7 @@ type AccessGroupConfig struct {
 
 func parseAccessGroupConfigs(value string) ([]AccessGroupConfig, error) {
 	var configs []AccessGroupConfig
-	err := yaml.Unmarshal([]byte(value), &configs)
-	if err != nil {
+	if err := yaml.Unmarshal([]byte(value), &configs); err != nil {
 		return nil, err
 	}
 	return configs, nil
