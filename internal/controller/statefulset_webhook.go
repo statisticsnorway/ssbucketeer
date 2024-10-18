@@ -153,16 +153,20 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	// TODO: Use Dapla Team API for this?
 	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
 		team := group
-		for _, groupType := range groupTypes {
-			team = strings.TrimSuffix(group, groupType.Suffix)
-			if team != group {
-				if err := m.addStandardBuckets(ctx, team, groupType.SourceData, bucketMounts); err != nil {
-					log.Error(err, "failed to add standard buckets")
-				}
+		var sourceData bool
+		for _, config := range m.GroupConfigs {
+			if strings.HasSuffix(group, config.Name) {
+				team = strings.TrimSuffix(group, config.Name)
+				sourceData = config.ReasonRequired
 				break
 			}
 		}
-		if team == group {
+
+		if team != group {
+			if err := m.addStandardBuckets(ctx, team, sourceData, bucketMounts); err != nil {
+				log.Error(err, "failed to add standard buckets")
+			}
+		} else {
 			log.Error(errors.New("could not deduce team from group"), "team could not be deduced from group", "group", group)
 		}
 	}
