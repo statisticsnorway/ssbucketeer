@@ -14,7 +14,6 @@ import (
 	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
-	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -60,14 +59,6 @@ type AccessGroupConfig struct {
 	ReasonRequired     bool          `yaml:"reasonRequired"`
 }
 
-func parseAccessGroupConfigs(value string) ([]AccessGroupConfig, error) {
-	var configs []AccessGroupConfig
-	if err := yaml.Unmarshal([]byte(value), &configs); err != nil {
-		return nil, err
-	}
-	return configs, nil
-}
-
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register("/mutate-apps-v1-statefulset", &admission.Webhook{Handler: m})
 }
@@ -109,7 +100,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 
 		if groupConfig.MaxServiceDuration > 0 {
-			sfs.Annotations[MaxServiceDurationAnnotation] = groupConfig.MaxServiceDuration.String()
+			sfs.Annotations[maxServiceDurationAnnotation] = groupConfig.MaxServiceDuration.String()
 		}
 
 		// Handle IAM bindings and k8s SA annotations
