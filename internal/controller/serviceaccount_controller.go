@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"google.golang.org/api/iam/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -44,6 +45,8 @@ type ServiceAccountReconciler struct {
 
 	DaplaGroupSaProject string
 	ClusterProjectId    string
+
+	GroupConfigs []AccessGroupConfig
 }
 
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
@@ -143,7 +146,6 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 		return ctrl.Result{}, err
 	}
 
-	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
 	conditionString := fmt.Sprintf("%s=%s", iamConditionKey, nn.String())
 
 	// No policy set on SA
@@ -182,6 +184,18 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
 	conditionString := fmt.Sprintf("%s=%s", iamConditionKey, nn.String())
 
+	// Fetch the maximum service duration for the group
+	maxDuration := r.getMaxServiceDuration(group)
+
+	// Calculate the expiration time if maxDuration is set
+	var expirationExpr string
+	if maxDuration > 0 {
+		expirationTime := time.Now().Add(maxDuration).UTC().Format(time.RFC3339)
+		expirationExpr = fmt.Sprintf("request.time < timestamp('%s')", expirationTime)
+	} else {
+		expirationExpr = "true"
+	}
+
 	// No policy set on SA
 	if policy == nil {
 		policy = &iam.Policy{}
@@ -200,12 +214,11 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 		Members: []string{k8sSaRef},
 		Condition: &iam.Expr{
 			Title:      conditionString,
-			Expression: "true",
+			Expression: expirationExpr,
 		},
 	}
 
 	if modified := ensureCorrectBinding(ctx, policy, binding, wantedBinding); !modified {
-		// No change
 		return ctrl.Result{}, nil
 	}
 
@@ -214,6 +227,15 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *ServiceAccountReconciler) getMaxServiceDuration(group string) time.Duration {
+	for _, config := range r.GroupConfigs {
+		if config.Name == group {
+			return config.MaxServiceDuration
+		}
+	}
+	return 0
 }
 
 func (r *ServiceAccountReconciler) updateIamPolicy(ctx context.Context, policy *iam.Policy, gcpSaRef string) (ctrl.Result, error) {

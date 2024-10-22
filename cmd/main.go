@@ -227,6 +227,7 @@ func main() {
 		ClusterProjectId:    gkeProjectId,
 		Iam:                 iamService,
 		Auth:                gAuth,
+		GroupConfigs:        cfg.GroupConfigs,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceAccount")
 		os.Exit(1)
