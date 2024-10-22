@@ -146,6 +146,7 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 		return ctrl.Result{}, err
 	}
 
+	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
 	conditionString := fmt.Sprintf("%s=%s", iamConditionKey, nn.String())
 
 	// No policy set on SA
