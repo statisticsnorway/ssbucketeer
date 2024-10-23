@@ -147,7 +147,7 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 	}
 
 	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
-	conditionString := fmt.Sprintf("%s=%s", iamConditionKey, nn.String())
+	conditionString := iamConditionString(nn)
 
 	// No policy set on SA
 	if policy == nil {
@@ -183,18 +183,16 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	}
 
 	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
-	conditionString := fmt.Sprintf("%s=%s", iamConditionKey, nn.String())
+	conditionString := iamConditionString(nn)
 
 	// Fetch the maximum service duration for the group
 	maxDuration := r.getMaxServiceDuration(group)
 
 	// Calculate the expiration time if maxDuration is set
-	var expirationExpr string
+	expirationExpr := "true"
 	if maxDuration > 0 {
 		expirationTime := time.Now().Add(maxDuration).UTC().Format(time.RFC3339)
 		expirationExpr = fmt.Sprintf("request.time < timestamp('%s')", expirationTime)
-	} else {
-		expirationExpr = "true"
 	}
 
 	// No policy set on SA
@@ -309,4 +307,8 @@ func toGcpSaRef(projectId, groupName string) string {
 func toK8sSaRef(clusterProjectId, namespace, name string) string {
 	const format = "serviceAccount:%s.svc.id.goog[%s/%s]"
 	return fmt.Sprintf(format, clusterProjectId, namespace, name)
+}
+
+func iamConditionString(nn types.NamespacedName) string {
+	return fmt.Sprintf("%s=%s", iamConditionKey, nn.String())
 }
