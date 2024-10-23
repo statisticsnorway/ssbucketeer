@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 	"time"
 
 	"google.golang.org/api/iam/v1"
@@ -230,7 +231,7 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 
 func (r *ServiceAccountReconciler) getMaxServiceDuration(group string) time.Duration {
 	for _, config := range r.GroupConfigs {
-		if config.Name == group {
+		if strings.HasSuffix(group, config.Name) {
 			return config.MaxServiceDuration
 		}
 	}
