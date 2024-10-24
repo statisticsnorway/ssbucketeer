@@ -53,10 +53,10 @@ type StatefulsetMutator struct {
 }
 
 type AccessGroupConfig struct {
-	Name               string        `yaml:"name"`
-	ProjectTemplate    string        `yaml:"projectTemplate"`
-	MaxServiceDuration time.Duration `yaml:"maxServiceDuration"`
-	ReasonRequired     bool          `yaml:"reasonRequired"`
+	Name                     string        `yaml:"name"`
+	ProjectTemplate          string        `yaml:"projectTemplate"`
+	RequestedServiceDuration time.Duration `yaml:"requestedServiceDuration"`
+	ReasonRequired           bool          `yaml:"reasonRequired"`
 }
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
@@ -76,6 +76,9 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	}
 
 	ensurePodAnnotations(&sfs.Spec.Template)
+
+	const requestedServiceDurationAnnotation = "requestedServiceDuration"
+	maxDuration := 2 * time.Hour
 
 	// 1. Check if we want to impersonate a group SA
 	group, hasGroupAnnotation := sfs.Annotations[impersonateGroupAnnotation]
@@ -99,9 +102,11 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			}
 		}
 
-		if groupConfig.MaxServiceDuration > 0 {
-			sfs.Annotations[maxServiceDurationAnnotation] = groupConfig.MaxServiceDuration.String()
+		if groupConfig.RequestedServiceDuration > maxDuration && sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
+			groupConfig.RequestedServiceDuration = maxDuration
 		}
+
+		sfs.Annotations[requestedServiceDurationAnnotation] = groupConfig.RequestedServiceDuration.String()
 
 		// Handle IAM bindings and k8s SA annotations
 		if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, group); err != nil {
@@ -202,7 +207,6 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		if err := m.Client.Create(ctx, probeJob); err != nil {
 			log.Error(err, "could not create probe job")
 		}
-
 	}
 
 	marshaledStatefulSet, err := json.Marshal(sfs)

@@ -186,8 +186,7 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
 	conditionString := iamConditionString(nn)
 
-	// Fetch the maximum service duration for the group
-	maxDuration := r.getMaxServiceDuration(group)
+	maxDuration := r.getRequestedServiceDuration(group)
 
 	// Calculate the expiration time if maxDuration is set
 	expirationExpr := "true"
@@ -229,10 +228,10 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceAccountReconciler) getMaxServiceDuration(group string) time.Duration {
+func (r *ServiceAccountReconciler) getRequestedServiceDuration(group string) time.Duration {
 	for _, config := range r.GroupConfigs {
 		if strings.HasSuffix(group, config.Name) {
-			return config.MaxServiceDuration
+			return config.RequestedServiceDuration
 		}
 	}
 	return 0
