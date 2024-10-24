@@ -231,7 +231,7 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 func (r *ServiceAccountReconciler) getRequestedServiceDuration(group string) time.Duration {
 	for _, config := range r.GroupConfigs {
 		if strings.HasSuffix(group, config.Name) {
-			return config.RequestedServiceDuration
+			return config.MaxDuration
 		}
 	}
 	return 0

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -53,10 +54,10 @@ type StatefulsetMutator struct {
 }
 
 type AccessGroupConfig struct {
-	Name                     string        `yaml:"name"`
-	ProjectTemplate          string        `yaml:"projectTemplate"`
-	RequestedServiceDuration time.Duration `yaml:"requestedServiceDuration"`
-	ReasonRequired           bool          `yaml:"reasonRequired"`
+	Name            string        `yaml:"name"`
+	ProjectTemplate string        `yaml:"projectTemplate"`
+	MaxDuration     time.Duration `yaml:"requestedServiceDuration"`
+	ReasonRequired  bool          `yaml:"reasonRequired"`
 }
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
@@ -77,12 +78,12 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	ensurePodAnnotations(&sfs.Spec.Template)
 
-	const requestedServiceDurationAnnotation = "requestedServiceDuration"
-	maxDuration := 2 * time.Hour
-
 	// 1. Check if we want to impersonate a group SA
 	group, hasGroupAnnotation := sfs.Annotations[impersonateGroupAnnotation]
 	if hasGroupAnnotation {
+		saAnnotations := map[string]string{
+			impersonateGroupAnnotation: group,
+		}
 		var groupConfig *AccessGroupConfig
 		for _, config := range m.GroupConfigs {
 			if config.Name == group {
@@ -98,18 +99,38 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		if groupConfig.ReasonRequired {
 			reason, hasReason := sfs.Annotations["reason"]
 			if !hasReason || reason == "" {
-				return admission.Denied(fmt.Sprintf("reason is required for access group: %s", group))
+				return admission.Denied(fmt.Sprintf("reason is required for access group: %q", group))
 			}
 		}
 
-		if groupConfig.RequestedServiceDuration > maxDuration && sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
-			groupConfig.RequestedServiceDuration = maxDuration
+		// Require requested-duration if MaxDuration>0 (0 = implicit infinite duration)
+
+		if groupConfig.MaxDuration > 0 {
+			durationString, ok := sfs.Annotations[requestedServiceDurationAnnotation]
+			if !ok {
+				return admission.Denied(fmt.Sprintf("access duration required for group %q", group))
+			}
+
+			duration, err := time.ParseDuration(durationString)
+			if err != nil {
+				log.Error(err, "failed to parse requested-duration", "duration", durationString)
+				return admission.Denied(fmt.Sprintf("invalid requested duration %q", durationString))
+			}
+
+			if duration > groupConfig.MaxDuration {
+				log.Info("attempt to start service with longer than max duration, defaulting to max",
+					"duration", duration,
+					"group", group,
+					"maxDuration", groupConfig.MaxDuration)
+				duration = groupConfig.MaxDuration
+				sfs.Annotations[requestedServiceDurationAnnotation] = duration.String()
+			}
+
+			saAnnotations[requestedServiceDurationAnnotation] = duration.String()
 		}
 
-		sfs.Annotations[requestedServiceDurationAnnotation] = groupConfig.RequestedServiceDuration.String()
-
 		// Handle IAM bindings and k8s SA annotations
-		if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, group); err != nil {
+		if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
 			log.Error(err, "handle serviceaccount")
 			return admission.Denied("error handling service account")
 		}
@@ -216,7 +237,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledStatefulSet)
 }
 
-func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace, name, group string) error {
+func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace, name string, saAnnotations map[string]string) error {
 	log := klog.FromContext(ctx)
 
 	sa := &corev1.ServiceAccount{}
@@ -225,16 +246,22 @@ func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace
 		return err
 	}
 
-	if sa.Annotations[impersonateGroupAnnotation] != group {
-		if sa.Annotations == nil {
-			sa.Annotations = make(map[string]string, 1)
-		}
-		sa.Annotations[impersonateGroupAnnotation] = group
-		if err := a.Client.Update(ctx, sa); err != nil {
-			return err
+	if sa.Annotations == nil {
+		sa.Annotations = maps.Clone(saAnnotations)
+		return a.Client.Update(ctx, sa)
+	}
+
+	modified := false
+	for key, val := range saAnnotations {
+		if sa.Annotations[key] != val {
+			modified = true
+			sa.Annotations[key] = val
 		}
 	}
 
+	if modified {
+		return a.Client.Update(ctx, sa)
+	}
 	return nil
 }
 
