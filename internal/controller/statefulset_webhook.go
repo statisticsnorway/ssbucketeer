@@ -56,7 +56,7 @@ type StatefulsetMutator struct {
 type AccessGroupConfig struct {
 	Name            string        `yaml:"name"`
 	ProjectTemplate string        `yaml:"projectTemplate"`
-	MaxDuration     time.Duration `yaml:"requestedServiceDuration"`
+	MaxDuration     time.Duration `yaml:"maxDuration"`
 	ReasonRequired  bool          `yaml:"reasonRequired"`
 }
 

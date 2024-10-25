@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"google.golang.org/api/iam/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -186,12 +187,32 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
 	conditionString := iamConditionString(nn)
 
+	sfs := &appsv1.StatefulSet{}
+	if err := r.Client.Get(ctx, nn, sfs); err != nil {
+		log.Error(err, "could not fetch StatefulSet")
+		return ctrl.Result{}, err
+	}
+
+	requestedDuration := time.Duration(0)
+	if durationStr, ok := sfs.Annotations[requestedServiceDurationAnnotation]; ok {
+		parsedDuration, err := time.ParseDuration(durationStr)
+		if err != nil {
+			log.Error(err, "failed to parse requested duration", "duration", durationStr)
+		} else {
+			requestedDuration = parsedDuration
+		}
+	}
+
 	maxDuration := r.getRequestedServiceDuration(group)
 
-	// Calculate the expiration time if maxDuration is set
+	finalDuration := requestedDuration
+	if maxDuration > 0 && (requestedDuration == 0 || requestedDuration > maxDuration) {
+		finalDuration = maxDuration
+	}
+
 	expirationExpr := "true"
-	if maxDuration > 0 {
-		expirationTime := time.Now().Add(maxDuration).UTC().Format(time.RFC3339)
+	if finalDuration > 0 {
+		expirationTime := time.Now().Add(finalDuration).UTC().Format(time.RFC3339)
 		expirationExpr = fmt.Sprintf("request.time < timestamp('%s')", expirationTime)
 	}
 
