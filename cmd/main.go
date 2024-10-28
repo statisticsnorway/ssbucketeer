@@ -299,7 +299,7 @@ func ParseUsernameDeducers(k8sClient client.Client) func(v string) (any, error) 
 			case "annotation":
 				annotation, ok := cfg.Config["annotation"]
 				if !ok {
-					return nil, errors.New("annotation deduced config missing annotation")
+					return nil, errors.New("annotation deducer config missing annotation")
 				}
 				deducers = append(deducers, &controller.NamespaceAnnotationUsernameDeducer{Annotation: annotation, Client: k8sClient})
 			}
