@@ -113,7 +113,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 
 func (m *ServiceAccountValidator) getMaxDurationForGroup(group string) time.Duration {
 	for _, config := range m.GroupConfigs {
-		if config.Name == group {
+		if strings.HasSuffix(group, config.Name) {
 			return config.MaxDuration
 		}
 	}

@@ -86,7 +86,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 		var groupConfig *AccessGroupConfig
 		for _, config := range m.GroupConfigs {
-			if config.Name == group {
+			if strings.HasSuffix(group, config.Name) {
 				groupConfig = &config
 				break
 			}
