@@ -303,5 +303,7 @@ func ParseUsernameDeducers(k8sClient client.Client) func(v string) (any, error) 
 				deducers = append(deducers, &controller.NamespaceAnnotationUsernameDeducer{Annotation: annotation, Client: k8sClient})
 			}
 		}
+
+		return deducers, nil
 	}
 }
