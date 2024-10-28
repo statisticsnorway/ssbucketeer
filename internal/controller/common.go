@@ -25,9 +25,6 @@ const (
 
 	finalizerName = "dapla.ssb.no/ssbucketeer"
 
-	userNamespacePrefix     = "user-ssb-"
-	userNamespaceAnnotation = "dapla.ssb.no/username"
-
 	iamConditionKey = "ssbucketeer.namespacedName"
 )
 

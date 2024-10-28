@@ -32,8 +32,6 @@ func (ds UsernameDeducers) FromNamespace(ctx context.Context, namespace string) 
 	return "", allErr
 }
 
-func (ds UsernameDeducers) FromYaml(content string) (UsernameDeducers, error)
-
 // PrefixUsernameDeducer uses a simple "namespace-prefix" approach to deduce the username
 type PrefixUsernameDeducer struct {
 	Prefix string
