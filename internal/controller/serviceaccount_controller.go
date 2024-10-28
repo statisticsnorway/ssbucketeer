@@ -193,26 +193,15 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 		return ctrl.Result{}, err
 	}
 
-	requestedDuration := time.Duration(0)
-	if durationStr, ok := sfs.Annotations[requestedServiceDurationAnnotation]; ok {
-		parsedDuration, err := time.ParseDuration(durationStr)
-		if err != nil {
-			log.Error(err, "failed to parse requested duration", "duration", durationStr)
-		} else {
-			requestedDuration = parsedDuration
-		}
-	}
-
-	maxDuration := r.getRequestedServiceDuration(group)
-
-	finalDuration := requestedDuration
-	if maxDuration > 0 && (requestedDuration == 0 || requestedDuration > maxDuration) {
-		finalDuration = maxDuration
-	}
-
+	saImpersonationDurationStr := sfs.Annotations[requestedServiceDurationAnnotation]
 	expirationExpr := "true"
-	if finalDuration > 0 {
-		expirationTime := time.Now().Add(finalDuration).UTC().Format(time.RFC3339)
+	if saImpersonationDurationStr != "" {
+		parsedDuration, err := time.ParseDuration(saImpersonationDurationStr)
+		if err != nil {
+			log.Error(err, "failed to parse ServiceAccount impersonation duration", "duration", saImpersonationDurationStr)
+			return ctrl.Result{}, fmt.Errorf("invalid duration: %s", saImpersonationDurationStr)
+		}
+		expirationTime := time.Now().Add(parsedDuration).UTC().Format(time.RFC3339)
 		expirationExpr = fmt.Sprintf("request.time < timestamp('%s')", expirationTime)
 	}
 
