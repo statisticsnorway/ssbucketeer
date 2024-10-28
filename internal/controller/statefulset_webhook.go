@@ -103,8 +103,6 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			}
 		}
 
-		// Require requested-duration if MaxDuration>0 (0 = implicit infinite duration)
-
 		if groupConfig.MaxDuration > 0 {
 			durationString, ok := sfs.Annotations[requestedServiceDurationAnnotation]
 			if !ok {
@@ -127,6 +125,11 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			}
 
 			saAnnotations[requestedServiceDurationAnnotation] = duration.String()
+
+			if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
+				log.Error(err, "handle serviceaccount")
+				return admission.Denied("error handling service account")
+			}
 		}
 
 		// Handle IAM bindings and k8s SA annotations

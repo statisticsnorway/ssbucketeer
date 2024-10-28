@@ -21,11 +21,9 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"strings"
 	"time"
 
 	"google.golang.org/api/iam/v1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -57,7 +55,7 @@ type ServiceAccountReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
+// TODO: Modify the Reconcile function to compare the state specified by
 // the ServiceAccount object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
@@ -110,7 +108,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	// Handle the needed IAM bindings
-	if res, err := r.handleGcpSa(ctx, group, req.NamespacedName); err != nil {
+	if res, err := r.handleGcpSa(ctx, &sa, group, req.NamespacedName); err != nil {
 		return res, err
 	}
 
@@ -172,7 +170,7 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 	return ctrl.Result{}, nil
 }
 
-func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string, nn types.NamespacedName) (ctrl.Result, error) {
+func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.ServiceAccount, group string, nn types.NamespacedName) (ctrl.Result, error) {
 	log := klog.FromContext(ctx)
 	gcpSaRef := toGcpSaRef(r.DaplaGroupSaProject, group)
 	k8sSaRef := toK8sSaRef(r.ClusterProjectId, nn.Namespace, nn.Name)
@@ -187,13 +185,8 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	// We need to use a "dummy condition" to uniquely identify this K8s SA's binding
 	conditionString := iamConditionString(nn)
 
-	sfs := &appsv1.StatefulSet{}
-	if err := r.Client.Get(ctx, nn, sfs); err != nil {
-		log.Error(err, "could not fetch StatefulSet")
-		return ctrl.Result{}, err
-	}
-
-	saImpersonationDurationStr := sfs.Annotations[requestedServiceDurationAnnotation]
+	// Fetch the impersonation duration directly from the SA annotation (set by StatefulSet webhook)
+	saImpersonationDurationStr := sa.Annotations[requestedServiceDurationAnnotation]
 	expirationExpr := "true"
 	if saImpersonationDurationStr != "" {
 		parsedDuration, err := time.ParseDuration(saImpersonationDurationStr)
@@ -236,15 +229,6 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, group string
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *ServiceAccountReconciler) getRequestedServiceDuration(group string) time.Duration {
-	for _, config := range r.GroupConfigs {
-		if strings.HasSuffix(group, config.Name) {
-			return config.MaxDuration
-		}
-	}
-	return 0
 }
 
 func (r *ServiceAccountReconciler) updateIamPolicy(ctx context.Context, policy *iam.Policy, gcpSaRef string) (ctrl.Result, error) {
@@ -298,7 +282,7 @@ func ensureCorrectBinding(ctx context.Context, policy *iam.Policy, binding, want
 		logIncorrect("member list has incorrect length or members, correcting")
 		shouldUpdate = true
 	}
-	if binding.Condition.Expression != "true" {
+	if binding.Condition.Expression != wantedBinding.Condition.Expression {
 		logIncorrect("binding condition is incorrect, correcting")
 		shouldUpdate = true
 	}
@@ -306,7 +290,6 @@ func ensureCorrectBinding(ctx context.Context, policy *iam.Policy, binding, want
 		*binding = *wantedBinding
 	}
 	return shouldUpdate
-
 }
 
 func toGcpSaRef(projectId, groupName string) string {
