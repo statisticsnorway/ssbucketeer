@@ -210,7 +210,8 @@ func main() {
 		}).SetupWithManager(mgr)
 
 		if err = (&controller.ServiceAccountValidator{
-			Auth: gAuth,
+			Auth:             gAuth,
+			UsernameDeducers: cfg.UsernameDeducers,
 		}).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to register webhook", "webhook", "ServiceAccount")
 			os.Exit(1)
