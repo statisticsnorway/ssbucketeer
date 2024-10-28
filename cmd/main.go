@@ -19,10 +19,12 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"io"
 	"net/http"
 	"os"
+	"reflect"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -30,12 +32,14 @@ import (
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/cloudidentity/v1"
 	"google.golang.org/api/iam/v1"
+	"gopkg.in/yaml.v3"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -55,6 +59,8 @@ type config struct {
 	IamProbeImage         string `env:"IAM_PROBE_IMAGE"`
 	PrecreatorImage       string `env:"PRECREATOR_IMAGE"`
 	ADCGroupEnvName       string `env:"ADC_GROUP_ENV_NAME"`
+
+	UsernameDeducers controller.UsernameDeducers `env:"USERNAME_DEDUCERS,required,notEmpty"`
 }
 
 var (
@@ -141,6 +147,9 @@ func main() {
 
 	cfg, err := env.ParseAsWithOptions[config](env.Options{
 		Prefix: "SSBUCKETEER_",
+		FuncMap: map[reflect.Type]env.ParserFunc{
+			reflect.TypeOf(controller.UsernameDeducers{}): ParseUsernameDeducers(mgr.GetClient()),
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "failed to parse environment variables")
@@ -263,4 +272,36 @@ func getGKEProjectId() (string, error) {
 	}
 
 	return string(body), nil
+}
+
+func ParseUsernameDeducers(k8sClient client.Client) func(v string) (any, error) {
+	return func(v string) (any, error) {
+		type deducerConfig struct {
+			Type   string            `yaml:"type"`
+			Config map[string]string `yaml:"config"`
+		}
+		var cfgs []deducerConfig
+
+		if err := yaml.Unmarshal([]byte(v), &cfgs); err != nil {
+			return nil, err
+		}
+
+		var deducers controller.UsernameDeducers
+		for _, cfg := range cfgs {
+			switch cfg.Type {
+			case "prefix":
+				prefix, ok := cfg.Config["prefix"]
+				if !ok {
+					return nil, errors.New("prefix deducer config missing prefix")
+				}
+				deducers = append(deducers, controller.PrefixUsernameDeducer{Prefix: prefix})
+			case "annotation":
+				annotation, ok := cfg.Config["annotation"]
+				if !ok {
+					return nil, errors.New("annotation deduced config missing annotation")
+				}
+				deducers = append(deducers, &controller.NamespaceAnnotationUsernameDeducer{Annotation: annotation, Client: k8sClient})
+			}
+		}
+	}
 }
