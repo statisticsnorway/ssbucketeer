@@ -3,11 +3,12 @@ package controller
 import "fmt"
 
 const (
-	enabledssbucketeerAnnotation   = "dapla.ssb.no/enable-ssbucketeer"
-	impersonateGroupAnnotation     = "dapla.ssb.no/impersonate-group"
-	mountBucketsAnnotation         = "dapla.ssb.no/mount-buckets"
-	mountStandardBucketsAnnotation = "dapla.ssb.no/mount-standard-buckets"
-	serviceContainerAnnotation     = "dapla.ssb.no/service-container-name"
+	enabledssbucketeerAnnotation       = "dapla.ssb.no/enable-ssbucketeer"
+	impersonateGroupAnnotation         = "dapla.ssb.no/impersonate-group"
+	mountBucketsAnnotation             = "dapla.ssb.no/mount-buckets"
+	mountStandardBucketsAnnotation     = "dapla.ssb.no/mount-standard-buckets"
+	serviceContainerAnnotation         = "dapla.ssb.no/service-container-name"
+	requestedServiceDurationAnnotation = "dapla.ssb.no/requested-service-duration"
 
 	probeJobStatefulsetAnnotation = "dapla.ssb.no/statefulset-probe-name"
 	iamProbeStatus                = "dapla.ssb.no/iam-probe-completed"

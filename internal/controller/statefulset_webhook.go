@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	rm "cloud.google.com/go/resourcemanager/apiv3"
 	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
@@ -47,20 +49,15 @@ type StatefulsetMutator struct {
 	IamProbeImage     string
 	PrecreatorImage   string
 	ADCGroupEnvName   string
+
+	GroupConfigs []AccessGroupConfig
 }
 
-var groupTypes = []struct {
-	Suffix     string
-	SourceData bool
-}{
-	{
-		Suffix:     "-developers",
-		SourceData: false,
-	},
-	{
-		Suffix:     "-data-admins",
-		SourceData: true,
-	},
+type AccessGroupConfig struct {
+	Name            string        `yaml:"name"`
+	ProjectTemplate string        `yaml:"projectTemplate"`
+	MaxDuration     time.Duration `yaml:"maxDuration"`
+	ReasonRequired  bool          `yaml:"reasonRequired"`
 }
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
@@ -84,12 +81,63 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	// 1. Check if we want to impersonate a group SA
 	group, hasGroupAnnotation := sfs.Annotations[impersonateGroupAnnotation]
 	if hasGroupAnnotation {
+		saAnnotations := map[string]string{
+			impersonateGroupAnnotation: group,
+		}
+		var groupConfig *AccessGroupConfig
+		for _, config := range m.GroupConfigs {
+			if strings.HasSuffix(group, config.Name) {
+				groupConfig = &config
+				break
+			}
+		}
+
+		if groupConfig == nil {
+			return admission.Denied(fmt.Sprintf("no configuration found for group: %s", group))
+		}
+
+		if groupConfig.ReasonRequired {
+			reason, hasReason := sfs.Annotations["reason"]
+			if !hasReason || reason == "" {
+				return admission.Denied(fmt.Sprintf("reason is required for access group: %q", group))
+			}
+			log.Info("Reason provided for access group", "group", group, "reason", reason)
+		}
+
+		if groupConfig.MaxDuration > 0 {
+			durationString, ok := sfs.Annotations[requestedServiceDurationAnnotation]
+			if !ok {
+				return admission.Denied(fmt.Sprintf("access duration required for group %q", group))
+			}
+
+			duration, err := time.ParseDuration(durationString)
+			if err != nil {
+				log.Error(err, "failed to parse requested-duration", "duration", durationString)
+				return admission.Denied(fmt.Sprintf("invalid requested duration %q", durationString))
+			}
+
+			if duration > groupConfig.MaxDuration {
+				log.Info("attempt to start service with longer than max duration, defaulting to max",
+					"duration", duration,
+					"group", group,
+					"maxDuration", groupConfig.MaxDuration)
+				duration = groupConfig.MaxDuration
+				sfs.Annotations[requestedServiceDurationAnnotation] = duration.String()
+			}
+
+			saAnnotations[requestedServiceDurationAnnotation] = duration.String()
+
+			if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
+				log.Error(err, "handle serviceaccount")
+				return admission.Denied("error handling service account")
+			}
+		}
+
 		// Handle IAM bindings and k8s SA annotations
-		if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, group); err != nil {
+		if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
 			log.Error(err, "handle serviceaccount")
 			return admission.Denied("error handling service account")
 		}
-
 	}
 
 	// 2. Mount buckets
@@ -126,16 +174,20 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	// TODO: Use Dapla Team API for this?
 	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
 		team := group
-		for _, groupType := range groupTypes {
-			team = strings.TrimSuffix(group, groupType.Suffix)
-			if team != group {
-				if err := m.addStandardBuckets(ctx, team, groupType.SourceData, bucketMounts); err != nil {
-					log.Error(err, "failed to add standard buckets")
-				}
+		var sourceData bool
+		for _, config := range m.GroupConfigs {
+			if strings.HasSuffix(group, config.Name) {
+				team = strings.TrimSuffix(group, config.Name)
+				sourceData = config.ReasonRequired
 				break
 			}
 		}
-		if team == group {
+
+		if team != group {
+			if err := m.addStandardBuckets(ctx, team, sourceData, bucketMounts); err != nil {
+				log.Error(err, "failed to add standard buckets")
+			}
+		} else {
 			log.Error(errors.New("could not deduce team from group"), "team could not be deduced from group", "group", group)
 		}
 	}
@@ -180,7 +232,6 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		if err := m.Client.Create(ctx, probeJob); err != nil {
 			log.Error(err, "could not create probe job")
 		}
-
 	}
 
 	marshaledStatefulSet, err := json.Marshal(sfs)
@@ -190,7 +241,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledStatefulSet)
 }
 
-func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace, name, group string) error {
+func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace, name string, saAnnotations map[string]string) error {
 	log := klog.FromContext(ctx)
 
 	sa := &corev1.ServiceAccount{}
@@ -199,16 +250,22 @@ func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace
 		return err
 	}
 
-	if sa.Annotations[impersonateGroupAnnotation] != group {
-		if sa.Annotations == nil {
-			sa.Annotations = make(map[string]string, 1)
-		}
-		sa.Annotations[impersonateGroupAnnotation] = group
-		if err := a.Client.Update(ctx, sa); err != nil {
-			return err
+	if sa.Annotations == nil {
+		sa.Annotations = maps.Clone(saAnnotations)
+		return a.Client.Update(ctx, sa)
+	}
+
+	modified := false
+	for key, val := range saAnnotations {
+		if sa.Annotations[key] != val {
+			modified = true
+			sa.Annotations[key] = val
 		}
 	}
 
+	if modified {
+		return a.Client.Update(ctx, sa)
+	}
 	return nil
 }
 

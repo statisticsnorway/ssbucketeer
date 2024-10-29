@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"reflect"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -30,6 +31,7 @@ import (
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/cloudidentity/v1"
 	"google.golang.org/api/iam/v1"
+	"gopkg.in/yaml.v2"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,12 +51,13 @@ import (
 )
 
 type config struct {
-	DaplaGroupSaProjectId string `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
-	TeamsFolderNumber     string `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
-	Stage                 string `env:"STAGE,required,notEmpty"`
-	IamProbeImage         string `env:"IAM_PROBE_IMAGE"`
-	PrecreatorImage       string `env:"PRECREATOR_IMAGE"`
-	ADCGroupEnvName       string `env:"ADC_GROUP_ENV_NAME"`
+	DaplaGroupSaProjectId string                         `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
+	TeamsFolderNumber     string                         `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
+	Stage                 string                         `env:"STAGE,required,notEmpty"`
+	IamProbeImage         string                         `env:"IAM_PROBE_IMAGE"`
+	PrecreatorImage       string                         `env:"PRECREATOR_IMAGE"`
+	ADCGroupEnvName       string                         `env:"ADC_GROUP_ENV_NAME"`
+	GroupConfigs          []controller.AccessGroupConfig `env:"GROUP_CONFIG"`
 }
 
 var (
@@ -141,6 +144,15 @@ func main() {
 
 	cfg, err := env.ParseAsWithOptions[config](env.Options{
 		Prefix: "SSBUCKETEER_",
+		FuncMap: map[reflect.Type]env.ParserFunc{
+			reflect.TypeOf([]controller.AccessGroupConfig{}): func(v string) (interface{}, error) {
+				var configs []controller.AccessGroupConfig
+				if err := yaml.Unmarshal([]byte(v), &configs); err != nil {
+					return nil, err
+				}
+				return configs, nil
+			},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "failed to parse environment variables")
@@ -215,6 +227,7 @@ func main() {
 		ClusterProjectId:    gkeProjectId,
 		Iam:                 iamService,
 		Auth:                gAuth,
+		GroupConfigs:        cfg.GroupConfigs,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceAccount")
 		os.Exit(1)
