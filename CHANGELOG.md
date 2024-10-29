@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.29](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.28...v0.0.29) (2024-10-29)
+
+
+### Features
+
+* pass GroupConfigs to webhooks ([5a72b44](https://github.com/statisticsnorway/ssbucketeer/commit/5a72b44284ccb8fa6b494e95b835e04fc2d3581d))
+
 ## [0.0.28](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.27...v0.0.28) (2024-10-29)
 
 
