@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.28](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.27...v0.0.28) (2024-10-29)
+
+
+### Features
+
+* access duration restriction support ([270ac79](https://github.com/statisticsnorway/ssbucketeer/commit/270ac7919b8acff143c347ceaac16f9c4e1fc49c))
+
+
+### Bug Fixes
+
+* don't add ADC env var if it already exists ([f10cfcc](https://github.com/statisticsnorway/ssbucketeer/commit/f10cfcc00f6bd036112674505ff4060af87c609d))
+* ignore NotFound error when deleting job ([bde2163](https://github.com/statisticsnorway/ssbucketeer/commit/bde2163d1cb4a52a986f106f8cbc57ee7507a17b))
+
 ## [0.0.27](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.26...v0.0.27) (2024-10-04)
 
 
