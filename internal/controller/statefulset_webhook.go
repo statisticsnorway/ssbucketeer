@@ -101,6 +101,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			if !hasReason || reason == "" {
 				return admission.Denied(fmt.Sprintf("reason is required for access group: %q", group))
 			}
+			log.Info("Reason provided for access group", "group", group, "reason", reason)
 		}
 
 		if groupConfig.MaxDuration > 0 {
