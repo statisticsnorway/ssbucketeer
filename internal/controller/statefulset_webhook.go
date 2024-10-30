@@ -177,7 +177,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		var sourceData bool
 		for _, config := range m.GroupConfigs {
 			if strings.HasSuffix(group, config.Name) {
-				team = strings.TrimSuffix(group, config.Name)
+				team = strings.TrimSuffix(strings.TrimSuffix(group, config.Name), "-")
 				sourceData = config.ReasonRequired
 				break
 			}
