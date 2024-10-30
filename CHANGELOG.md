@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.30](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.29...v0.0.30) (2024-10-30)
+
+
+### Features
+
+* modular project templating based on group config ([#48](https://github.com/statisticsnorway/ssbucketeer/issues/48)) ([256e996](https://github.com/statisticsnorway/ssbucketeer/commit/256e996b19f9895ed2372a0263b5c3437d2388e1))
+
 ## [0.0.29](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.28...v0.0.29) (2024-10-29)
 
 
