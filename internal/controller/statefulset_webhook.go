@@ -91,7 +91,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 
 		if groupConfig.ReasonRequired {
-			reason, hasReason := sfs.Annotations["reason"]
+			reason, hasReason := sfs.Annotations[accessReasonAnnotation]
 			if !hasReason || reason == "" {
 				return admission.Denied(fmt.Sprintf("reason is required for access group: %q", group))
 			}

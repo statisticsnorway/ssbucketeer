@@ -12,6 +12,7 @@ const (
 	mountStandardBucketsAnnotation     = "dapla.ssb.no/mount-standard-buckets"
 	serviceContainerAnnotation         = "dapla.ssb.no/service-container-name"
 	requestedServiceDurationAnnotation = "dapla.ssb.no/requested-service-duration"
+	accessReasonAnnotation             = "dapla.ssb.no/access-reason"
 
 	probeJobStatefulsetAnnotation = "dapla.ssb.no/statefulset-probe-name"
 	iamProbeStatus                = "dapla.ssb.no/iam-probe-completed"
