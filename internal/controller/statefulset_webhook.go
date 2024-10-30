@@ -171,6 +171,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		var gc *AccessGroupConfig
 		for _, config := range m.GroupConfigs {
 			if team = strings.TrimSuffix(group, config.Name); team != group {
+				team = strings.TrimSuffix(team, "-")
 				gc = &config
 				break
 			}
