@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"time"
 )
 
 const (
@@ -11,6 +12,7 @@ const (
 	mountStandardBucketsAnnotation     = "dapla.ssb.no/mount-standard-buckets"
 	serviceContainerAnnotation         = "dapla.ssb.no/service-container-name"
 	requestedServiceDurationAnnotation = "dapla.ssb.no/requested-service-duration"
+	accessReasonAnnotation             = "dapla.ssb.no/access-reason"
 
 	probeJobStatefulsetAnnotation = "dapla.ssb.no/statefulset-probe-name"
 	iamProbeStatus                = "dapla.ssb.no/iam-probe-completed"
@@ -35,4 +37,16 @@ var (
 
 type Auther interface {
 	UserIsMemberOf(username, group string) (bool, error)
+}
+
+type AccessGroupConfig struct {
+	Name            string        `yaml:"name"`
+	ProjectTemplate string        `yaml:"projectTemplate"`
+	MaxDuration     time.Duration `yaml:"maxDuration"`
+	ReasonRequired  bool          `yaml:"reasonRequired"`
+}
+
+type ProjectTemplateData struct {
+	TeamName string
+	Stage    string
 }

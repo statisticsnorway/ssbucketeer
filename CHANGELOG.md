@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.0.32](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.31...v0.0.32) (2024-10-30)
+
+
+### Bug Fixes
+
+* define reason annotation as const string ([e27d729](https://github.com/statisticsnorway/ssbucketeer/commit/e27d7299f1f681f0a2ffeb452cf23e0dabf4399e))
+
+## [0.0.31](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.30...v0.0.31) (2024-10-30)
+
+
+### Bug Fixes
+
+* strip trailing hyphen from team name (for real) ([9ece0f3](https://github.com/statisticsnorway/ssbucketeer/commit/9ece0f3e37e57c34eea7dab6e00d4925fc16deec))
+
+## [0.0.30](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.29...v0.0.30) (2024-10-30)
+
+
+### Features
+
+* modular project templating based on group config ([#48](https://github.com/statisticsnorway/ssbucketeer/issues/48)) ([256e996](https://github.com/statisticsnorway/ssbucketeer/commit/256e996b19f9895ed2372a0263b5c3437d2388e1))
+
 ## [0.0.29](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.28...v0.0.29) (2024-10-29)
 
 
