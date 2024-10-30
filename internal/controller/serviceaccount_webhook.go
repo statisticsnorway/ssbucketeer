@@ -37,8 +37,9 @@ func (e IllegalNamespaceError) Error() string {
 }
 
 type ServiceAccountValidator struct {
-	Auth         Auther
-	GroupConfigs []AccessGroupConfig
+	Auth             Auther
+	GroupConfigs     []AccessGroupConfig
+	UsernameDeducers UsernameDeducers
 }
 
 func (m *ServiceAccountValidator) SetupWithManager(mgr ctrl.Manager) error {
@@ -75,10 +76,9 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		return nil, nil
 	}
 
-	user := strings.TrimPrefix(sa.Namespace, userNamespacePrefix)
-	if user == sa.Namespace {
-		err := IllegalNamespaceError{Namespace: sa.Namespace, RequestedGroup: group}
-		log.Error(err, "attempt to impersonate group from non-user namespace")
+	user, err := m.UsernameDeducers.FromNamespace(ctx, sa.Namespace)
+	if err != nil {
+		log.Error(err, "failed to deduce username")
 		return nil, err
 	}
 

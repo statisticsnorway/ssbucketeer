@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"fmt"
+	"errors"
 	"time"
 )
 
@@ -28,13 +28,11 @@ const (
 
 	finalizerName = "dapla.ssb.no/ssbucketeer"
 
-	userNamespacePrefix = "user-ssb-"
-
 	iamConditionKey = "ssbucketeer.namespacedName"
 )
 
 var (
-	errIamConcurrencyError = fmt.Errorf("concurrency error when updating IAM policy")
+	errIamConcurrencyError = errors.New("concurrency error when updating IAM policy")
 )
 
 type Auther interface {
