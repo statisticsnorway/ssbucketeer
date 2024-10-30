@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.32](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.31...v0.0.32) (2024-10-30)
+
+
+### Bug Fixes
+
+* define reason annotation as const string ([e27d729](https://github.com/statisticsnorway/ssbucketeer/commit/e27d7299f1f681f0a2ffeb452cf23e0dabf4399e))
+
 ## [0.0.31](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.30...v0.0.31) (2024-10-30)
 
 
