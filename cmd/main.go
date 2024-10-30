@@ -53,14 +53,14 @@ import (
 )
 
 type config struct {
-	DaplaGroupSaProjectId string `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
-	TeamsFolderNumber     string `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
-	Stage                 string `env:"STAGE,required,notEmpty"`
-	IamProbeImage         string `env:"IAM_PROBE_IMAGE"`
-	PrecreatorImage       string `env:"PRECREATOR_IMAGE"`
-	ADCGroupEnvName       string `env:"ADC_GROUP_ENV_NAME"`
-
-	UsernameDeducers controller.UsernameDeducers `env:"USERNAME_DEDUCERS,required,notEmpty"`
+	DaplaGroupSaProjectId string                         `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
+	TeamsFolderNumber     string                         `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
+	Stage                 string                         `env:"STAGE,required,notEmpty"`
+	IamProbeImage         string                         `env:"IAM_PROBE_IMAGE"`
+	PrecreatorImage       string                         `env:"PRECREATOR_IMAGE"`
+	ADCGroupEnvName       string                         `env:"ADC_GROUP_ENV_NAME"`
+	GroupConfigs          []controller.AccessGroupConfig `env:"GROUP_CONFIG"`
+	UsernameDeducers      controller.UsernameDeducers    `env:"USERNAME_DEDUCERS,required,notEmpty"`
 }
 
 var (
@@ -149,6 +149,13 @@ func main() {
 		Prefix: "SSBUCKETEER_",
 		FuncMap: map[reflect.Type]env.ParserFunc{
 			reflect.TypeOf(controller.UsernameDeducers{}): ParseUsernameDeducers(mgr.GetClient()),
+			reflect.TypeOf([]controller.AccessGroupConfig{}): func(v string) (interface{}, error) {
+				var configs []controller.AccessGroupConfig
+				if err := yaml.Unmarshal([]byte(v), &configs); err != nil {
+					return nil, err
+				}
+				return configs, nil
+			},
 		},
 	})
 	if err != nil {
@@ -207,10 +214,12 @@ func main() {
 			IamProbeImage:     cfg.IamProbeImage,
 			PrecreatorImage:   cfg.PrecreatorImage,
 			ADCGroupEnvName:   cfg.ADCGroupEnvName,
+			GroupConfigs:      cfg.GroupConfigs,
 		}).SetupWithManager(mgr)
 
 		if err = (&controller.ServiceAccountValidator{
 			Auth:             gAuth,
+			GroupConfigs:     cfg.GroupConfigs,
 			UsernameDeducers: cfg.UsernameDeducers,
 		}).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to register webhook", "webhook", "ServiceAccount")
@@ -225,6 +234,7 @@ func main() {
 		ClusterProjectId:    gkeProjectId,
 		Iam:                 iamService,
 		Auth:                gAuth,
+		GroupConfigs:        cfg.GroupConfigs,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceAccount")
 		os.Exit(1)

@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,6 +38,7 @@ func (e IllegalNamespaceError) Error() string {
 
 type ServiceAccountValidator struct {
 	Auth             Auther
+	GroupConfigs     []AccessGroupConfig
 	UsernameDeducers UsernameDeducers
 }
 
@@ -59,7 +62,7 @@ func (m *ServiceAccountValidator) ValidateDelete(ctx context.Context, req runtim
 }
 
 // validate checks if a group impersonation is requested, and, if so, whether the user (namespace)
-// is allowed to impersonate that group.
+// is allowed to impersonate that group and whether the duration is within the allowed limit.
 func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Object) (admission.Warnings, error) {
 	log := klog.FromContext(ctx)
 
@@ -91,5 +94,28 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		return nil, err
 	}
 
+	durationStr, hasDuration := sa.Annotations[requestedServiceDurationAnnotation]
+	if hasDuration {
+		parsedDuration, err := time.ParseDuration(durationStr)
+		if err != nil {
+			log.Error(err, "failed to parse ServiceAccount duration", "duration", durationStr)
+			return nil, fmt.Errorf("invalid duration: %s", durationStr)
+		}
+
+		maxDuration := m.getMaxDurationForGroup(group)
+		if parsedDuration > maxDuration {
+			return nil, fmt.Errorf("requested duration %q exceeds max allowed %q for group %q", parsedDuration, maxDuration, group)
+		}
+	}
+
 	return nil, nil
+}
+
+func (m *ServiceAccountValidator) getMaxDurationForGroup(group string) time.Duration {
+	for _, config := range m.GroupConfigs {
+		if strings.HasSuffix(group, config.Name) {
+			return config.MaxDuration
+		}
+	}
+	return 0
 }
