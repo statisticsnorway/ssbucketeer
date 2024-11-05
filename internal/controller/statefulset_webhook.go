@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"slices"
 	"strings"
-	"text/template"
 	"time"
 
 	rm "cloud.google.com/go/resourcemanager/apiv3"
@@ -287,17 +286,13 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 		return fmt.Errorf("get folder %q: %w", team, err)
 	}
 
-	tpl, err := template.New("").Parse(gc.ProjectTemplate)
+	projectName, err := gc.ProjectTemplate.Execute(ProjectTemplateData{TeamName: team, Stage: m.Stage})
 	if err != nil {
-		return fmt.Errorf("parse template %q: %w", gc.ProjectTemplate, err)
-	}
-	projectName := strings.Builder{}
-	if err = tpl.Execute(&projectName, ProjectTemplateData{TeamName: team, Stage: m.Stage}); err != nil {
-		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate, err)
+		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.template.Name(), err)
 	}
 
 	projectIt := m.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
-		Query: fmt.Sprintf(`parent=%s AND state=ACTIVE AND displayName=%s`, folder.Name, projectName.String()),
+		Query: fmt.Sprintf(`parent=%s AND state=ACTIVE AND displayName=%s`, folder.Name, projectName),
 	})
 
 	project, err := projectIt.Next()
