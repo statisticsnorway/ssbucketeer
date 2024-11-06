@@ -145,13 +145,7 @@ func main() {
 	cfg, err := env.ParseAsWithOptions[config](env.Options{
 		Prefix: "SSBUCKETEER_",
 		FuncMap: map[reflect.Type]env.ParserFunc{
-			reflect.TypeOf([]controller.AccessGroupConfig{}): func(v string) (interface{}, error) {
-				var configs []controller.AccessGroupConfig
-				if err := yaml.Unmarshal([]byte(v), &configs); err != nil {
-					return nil, err
-				}
-				return configs, nil
-			},
+			reflect.TypeOf([]controller.AccessGroupConfig{}): yamlParser[[]controller.AccessGroupConfig],
 		},
 	})
 	if err != nil {
@@ -278,4 +272,22 @@ func getGKEProjectId() (string, error) {
 	}
 
 	return string(body), nil
+}
+
+// yamlParser is a helper function for parsing environment variables as YAML strings.
+//
+// To parse an environment variable as a YAML string, simply add an entry to the
+// env.Option.FuncMap when parsing:
+//
+//	  env.ParseWithOptions(&config, env.Options{
+//			FuncMap: map[reflect.Type]env.ParserFunc{
+//				reflect.TypeOf(CustomType{}): yamlParser[CustomType],
+//			},
+//	 })
+func yamlParser[T any](v string) (any, error) {
+	var out T
+	if err := yaml.Unmarshal([]byte(v), &out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
