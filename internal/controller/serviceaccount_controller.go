@@ -23,6 +23,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/statisticsnorway/ssbucketeer/internal/groups"
 	"google.golang.org/api/iam/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,7 +47,7 @@ type ServiceAccountReconciler struct {
 	DaplaGroupSaProject string
 	ClusterProjectId    string
 
-	GroupConfigs []AccessGroupConfig
+	GroupConfigs []groups.AccessConfig
 }
 
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete

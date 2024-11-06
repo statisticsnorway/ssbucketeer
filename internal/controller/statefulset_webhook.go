@@ -14,6 +14,7 @@ import (
 	rm "cloud.google.com/go/resourcemanager/apiv3"
 	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
 	"cloud.google.com/go/storage"
+	"github.com/statisticsnorway/ssbucketeer/internal/groups"
 	"google.golang.org/api/iterator"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -50,7 +51,7 @@ type StatefulsetMutator struct {
 	PrecreatorImage   string
 	ADCGroupEnvName   string
 
-	GroupConfigs []AccessGroupConfig
+	GroupConfigs []groups.AccessConfig
 }
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
@@ -77,7 +78,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		saAnnotations := map[string]string{
 			impersonateGroupAnnotation: group,
 		}
-		var groupConfig *AccessGroupConfig
+		var groupConfig *groups.AccessConfig
 		for _, config := range m.GroupConfigs {
 			if strings.HasSuffix(group, config.Name) {
 				groupConfig = &config
@@ -167,7 +168,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	// TODO: Use Dapla Team API for this?
 	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
 		team := group
-		var gc *AccessGroupConfig
+		var gc *groups.AccessConfig
 		for _, config := range m.GroupConfigs {
 			if team = strings.TrimSuffix(group, config.Name); team != group {
 				team = strings.TrimSuffix(team, "-")
@@ -274,7 +275,7 @@ func getFolderWithDisplayName(it *rm.FolderIterator, displayName string) (*rmpb.
 	}
 }
 
-func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string, gc AccessGroupConfig, bucketMounts map[string]string) error {
+func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string, gc groups.AccessConfig, bucketMounts map[string]string) error {
 	teamFolderIt := m.Folders.ListFolders(ctx, &rmpb.ListFoldersRequest{
 		Parent: fmt.Sprintf("folders/%s", m.TeamsFolderNumber),
 	})
@@ -286,9 +287,9 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 		return fmt.Errorf("get folder %q: %w", team, err)
 	}
 
-	projectName, err := gc.ProjectTemplate.Execute(ProjectTemplateData{TeamName: team, Stage: m.Stage})
+	projectName, err := gc.ProjectTemplate.Execute(groups.ProjectTemplateData{TeamName: team, Stage: m.Stage})
 	if err != nil {
-		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.template.Name(), err)
+		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.Name(), err)
 	}
 
 	projectIt := m.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{

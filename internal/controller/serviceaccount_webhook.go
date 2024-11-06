@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/statisticsnorway/ssbucketeer/internal/groups"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,7 +39,7 @@ func (e IllegalNamespaceError) Error() string {
 
 type ServiceAccountValidator struct {
 	Auth         Auther
-	GroupConfigs []AccessGroupConfig
+	GroupConfigs []groups.AccessConfig
 }
 
 func (m *ServiceAccountValidator) SetupWithManager(mgr ctrl.Manager) error {
