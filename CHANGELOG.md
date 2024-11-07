@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.33](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.32...v0.0.33) (2024-11-07)
+
+
+### Bug Fixes
+
+* use creationTimestamp as starting point in IAM condition ([b2bf659](https://github.com/statisticsnorway/ssbucketeer/commit/b2bf659902806de3ed0794726ff03fe5defe9f0d))
+
 ## [0.0.32](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.31...v0.0.32) (2024-10-30)
 
 
