@@ -194,7 +194,7 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.S
 			log.Error(err, "failed to parse ServiceAccount impersonation duration", "duration", saImpersonationDurationStr)
 			return ctrl.Result{}, fmt.Errorf("invalid duration: %s", saImpersonationDurationStr)
 		}
-		expirationTime := time.Now().Add(parsedDuration).UTC().Format(time.RFC3339)
+		expirationTime := sa.CreationTimestamp.Add(parsedDuration).UTC().Format(time.RFC3339)
 		expirationExpr = fmt.Sprintf("request.time < timestamp('%s')", expirationTime)
 	}
 
