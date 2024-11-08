@@ -31,7 +31,7 @@ import (
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/cloudidentity/v1"
 	"google.golang.org/api/iam/v1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
