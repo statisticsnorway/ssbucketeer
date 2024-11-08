@@ -179,7 +179,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts, m.PrecreatorImage)
 
 	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
-		sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
+		sfs.Annotations[iamProbeStatus] = iamProbeRunning
+		sfs.Annotations[iamProbeStatefulsetReplicas] = fmt.Sprint(*sfs.Spec.Replicas)
 		sfs.Spec.Replicas = ptr[int32](0)
 
 		probeJob := &batchv1.Job{
@@ -187,7 +188,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 				Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
 				Namespace: sfs.Namespace,
 				Annotations: map[string]string{
-					probeJobStatefulsetAnnotation: sfs.Name,
+					iamProbeStatefulsetAnnotation: sfs.Name,
 				},
 			},
 			Spec: batchv1.JobSpec{

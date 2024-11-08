@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -54,7 +53,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	// If the Job does not have this annotation, it is not relevant to us
-	sfsName, ok := job.Annotations[probeJobStatefulsetAnnotation]
+	sfsName, ok := job.Annotations[iamProbeStatefulsetAnnotation]
 	if !ok {
 		return ctrl.Result{}, nil
 	}
@@ -80,15 +79,13 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	// Parse the IAM probe status to find the original replica count
-	replicasStr := strings.TrimPrefix(sfs.Annotations[iamProbeStatus], iamProbeRunningPrefix)
-	replicas, err := strconv.Atoi(replicasStr)
+	replicas, err := strconv.Atoi(sfs.Annotations[iamProbeStatefulsetReplicas])
 	if err != nil {
-		log.Error(err, "invalid iamProbeStatus %q, defaulting to 1 replica")
+		log.Error(err, "invalid replicas value, defaulting to 1 replica", "replicas", sfs.Annotations[iamProbeStatus])
 		replicas = 1
 	}
 
-	sfs.Spec.Replicas = ptr[int32](int32(replicas))
+	sfs.Spec.Replicas = ptr(int32(replicas))
 	sfs.Annotations[iamProbeStatus] = iamProbeDone
 
 	if err := r.Update(ctx, &sfs); err != nil {

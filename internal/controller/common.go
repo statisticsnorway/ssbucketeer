@@ -16,10 +16,12 @@ const (
 	requestedServiceDurationAnnotation = "dapla.ssb.no/requested-service-duration"
 	accessReasonAnnotation             = "dapla.ssb.no/access-reason"
 
-	probeJobStatefulsetAnnotation = "dapla.ssb.no/statefulset-probe-name"
-	iamProbeStatus                = "dapla.ssb.no/iam-probe-completed"
-	iamProbeRunningPrefix         = "running-replicas-"
-	iamProbeDone                  = "done"
+	iamProbeStatefulsetAnnotation = "dapla.ssb.no/iam-probe-statefulset-name"
+	iamProbeStatefulsetReplicas   = "dapla.ssb.no/iam-probe-statefulset-replicas"
+	iamProbeStatus                = "dapla.ssb.no/iam-probe-status"
+
+	iamProbeRunning = "running"
+	iamProbeDone    = "done"
 
 	istioExcludedIpRangesAnnotation = "traffic.sidecar.istio.io/excludeOutboundIPRanges"
 	gcsfuseOutboundIPRange          = "169.254.169.254/32"
