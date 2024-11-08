@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.37](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.36...v0.0.37) (2024-11-08)
+
+
+### Bug Fixes
+
+* log human readable duration ([64f64be](https://github.com/statisticsnorway/ssbucketeer/commit/64f64bef765dac9d067ca036a72bdfbbb2f1652a))
+* only log acccess on SA creation ([418414f](https://github.com/statisticsnorway/ssbucketeer/commit/418414f124289fd0cca0f42c0d2af65438610058))
+* trim suffix to get team name ([35d5162](https://github.com/statisticsnorway/ssbucketeer/commit/35d5162b269a925835cc5a801ba0981e09f4b060))
+
 ## [0.0.36](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.35...v0.0.36) (2024-11-08)
 
 
