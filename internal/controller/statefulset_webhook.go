@@ -50,7 +50,7 @@ type StatefulsetMutator struct {
 	PrecreatorImage   string
 	ADCGroupEnvName   string
 
-	GroupConfigs []AccessGroupConfig
+	GroupConfigs AccessGroupConfigs
 }
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
@@ -77,14 +77,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		saAnnotations := map[string]string{
 			impersonateGroupAnnotation: group,
 		}
-		var groupConfig *AccessGroupConfig
-		for _, config := range m.GroupConfigs {
-			if strings.HasSuffix(group, config.Name) {
-				groupConfig = &config
-				break
-			}
-		}
 
+		groupConfig := m.GroupConfigs.GetConfig(group)
 		if groupConfig == nil {
 			return admission.Denied(fmt.Sprintf("no configuration found for group: %s", group))
 		}
