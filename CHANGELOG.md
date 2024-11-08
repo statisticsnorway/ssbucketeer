@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.39](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.38...v0.0.39) (2024-11-08)
+
+
+### Bug Fixes
+
+* use base64 encoded json as id ([6f9c374](https://github.com/statisticsnorway/ssbucketeer/commit/6f9c374f680159efd2eb1014251a3cd20d1ff18c))
+
 ## [0.0.38](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.37...v0.0.38) (2024-11-08)
 
 
