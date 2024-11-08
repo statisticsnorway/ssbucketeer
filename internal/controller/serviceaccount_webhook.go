@@ -123,7 +123,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		return nil, fmt.Errorf("requested duration %q exceeds max allowed %q for group %q", parsedDuration, groupType.MaxDuration, group)
 	}
 
-	if !hasReason {
+	if !hasReason || reason == "" {
 		return nil, fmt.Errorf("reason required for group %q of type %q", group, groupType.Name)
 	}
 

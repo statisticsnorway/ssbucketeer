@@ -88,6 +88,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			if !hasReason || reason == "" {
 				return admission.Denied(fmt.Sprintf("reason is required for access group: %q", group))
 			}
+			saAnnotations[accessReasonAnnotation] = reason
 			log.Info("Reason provided for access group", "group", group, "reason", reason)
 		}
 
