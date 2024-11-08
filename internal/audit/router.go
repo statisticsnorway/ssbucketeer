@@ -13,7 +13,7 @@ type Payload struct {
 	Reason            string
 	StartTime         time.Time
 	EndTime           time.Time
-	Duration          time.Duration
+	Duration          string
 	Service           Service
 }
 

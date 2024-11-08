@@ -146,7 +146,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 			Reason:            reason,
 			StartTime:         sa.CreationTimestamp.Time,
 			EndTime:           sa.CreationTimestamp.Add(parsedDuration),
-			Duration:          parsedDuration,
+			Duration:          parsedDuration.String(),
 			Service: audit.Service{
 				Chart: audit.ChartMeta{
 					Name:    chartName,
