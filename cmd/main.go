@@ -63,8 +63,8 @@ type config struct {
 }
 
 type auditSink struct {
-	Type   string
-	Config map[string]string
+	Type   string            `yaml:"type"`
+	Config map[string]string `yaml:"config"`
 }
 
 var (
