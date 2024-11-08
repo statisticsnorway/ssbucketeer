@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.38](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.37...v0.0.38) (2024-11-08)
+
+
+### Features
+
+* unique cloud logging timestamp and ID ([11c73ba](https://github.com/statisticsnorway/ssbucketeer/commit/11c73ba999d321565755e3c0efeb1ed286721ca8))
+
+
+### Bug Fixes
+
+* revert logging only on creation ([87687c4](https://github.com/statisticsnorway/ssbucketeer/commit/87687c43914bcd76f72c48a309c783411c403bd9))
+
 ## [0.0.37](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.36...v0.0.37) (2024-11-08)
 
 
