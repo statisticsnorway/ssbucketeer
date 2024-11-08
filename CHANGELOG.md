@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.36](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.35...v0.0.36) (2024-11-08)
+
+
+### Bug Fixes
+
+* propagate access reason to SA ([bbb7480](https://github.com/statisticsnorway/ssbucketeer/commit/bbb748016baa8b9e21ca175e457faf17a4878ae6))
+
 ## [0.0.35](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.34...v0.0.35) (2024-11-08)
 
 
