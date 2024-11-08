@@ -2,6 +2,8 @@ package audit
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/logging"
@@ -33,7 +35,17 @@ func NewCloudLoggingSink(ctx context.Context, config map[string]string) (*CloudL
 }
 
 func (r *CloudLogging) Record(p Payload) error {
-	r.Logger.Log(logging.Entry{Payload: p})
+	idString, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	h := sha256.New()
+	h.Write([]byte(idString))
+	r.Logger.Log(logging.Entry{
+		Payload:   p,
+		Timestamp: p.StartTime,
+		InsertID:  string(h.Sum(nil)),
+	})
 	return nil
 }
 
