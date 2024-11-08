@@ -151,7 +151,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		},
 	}
 
-	if auditErr := m.Audit.RecordAll(auditEntry); err != nil {
+	if auditErr := m.Audit.RecordAll(auditEntry); auditErr != nil {
 		log.Error(auditErr, "error delivering audit payload to one or more sinks", "payload", auditEntry)
 	}
 

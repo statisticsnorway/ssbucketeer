@@ -9,6 +9,7 @@ require (
 	cloud.google.com/go/resourcemanager v1.10.0
 	cloud.google.com/go/storage v1.43.0
 	github.com/caarlos0/env/v11 v11.2.2
+	github.com/google/martian/v3 v3.3.3
 	github.com/onsi/ginkgo/v2 v2.20.0
 	github.com/onsi/gomega v1.34.1
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa

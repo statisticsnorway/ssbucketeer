@@ -212,6 +212,11 @@ func main() {
 			auditRouter = append(auditRouter, cl)
 		}
 	}
+	defer func() {
+		if err := auditRouter.FlushAll(); err != nil {
+			ctrl.Log.Error(err, "error flushing audit log sinks")
+		}
+	}()
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		(&controller.StatefulsetMutator{
