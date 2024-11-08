@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.40](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.39...v0.0.40) (2024-11-08)
+
+
+### Bug Fixes
+
+* trim trailing hyphen from team name ([5dcd4c9](https://github.com/statisticsnorway/ssbucketeer/commit/5dcd4c93f1b4493f41c4ccf3158d4fbfeead0451))
+
 ## [0.0.39](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.38...v0.0.39) (2024-11-08)
 
 
