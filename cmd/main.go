@@ -31,7 +31,7 @@ import (
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/cloudidentity/v1"
 	"google.golang.org/api/iam/v1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,6 +46,7 @@ import (
 
 	"github.com/caarlos0/env/v11"
 
+	"github.com/statisticsnorway/ssbucketeer/internal/audit"
 	"github.com/statisticsnorway/ssbucketeer/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
@@ -57,7 +58,13 @@ type config struct {
 	IamProbeImage         string                         `env:"IAM_PROBE_IMAGE"`
 	PrecreatorImage       string                         `env:"PRECREATOR_IMAGE"`
 	ADCGroupEnvName       string                         `env:"ADC_GROUP_ENV_NAME"`
-	GroupConfigs          []controller.AccessGroupConfig `env:"GROUP_CONFIG"`
+	GroupConfigs          []controller.AccessGroupConfig `env:"GROUP_CONFIG,required,notEmpty"`
+	AuditSinks            []auditSink                    `env:"AUDIT_SINKS"`
+}
+
+type auditSink struct {
+	Type   string
+	Config map[string]string
 }
 
 var (
@@ -146,6 +153,7 @@ func main() {
 		Prefix: "SSBUCKETEER_",
 		FuncMap: map[reflect.Type]env.ParserFunc{
 			reflect.TypeOf([]controller.AccessGroupConfig{}): yamlParser[[]controller.AccessGroupConfig],
+			reflect.TypeOf([]auditSink{}):                    yamlParser[[]auditSink],
 		},
 	})
 	if err != nil {
@@ -192,6 +200,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	var auditRouter audit.Router
+	for _, sink := range cfg.AuditSinks {
+		switch sink.Type {
+		case "cloudlogging":
+			cl, err := audit.NewCloudLoggingSink(ctx, sink.Config)
+			if err != nil {
+				setupLog.Error(err, "failed to configure cloud logging router", "sink.Config", sink.Config)
+				os.Exit(1)
+			}
+			auditRouter = append(auditRouter, cl)
+		}
+	}
+	defer func() {
+		if err := auditRouter.FlushAll(); err != nil {
+			ctrl.Log.Error(err, "error flushing audit log sinks")
+		}
+	}()
+
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		(&controller.StatefulsetMutator{
 			Client:            mgr.GetClient(),
@@ -210,6 +236,7 @@ func main() {
 		if err = (&controller.ServiceAccountValidator{
 			Auth:         gAuth,
 			GroupConfigs: cfg.GroupConfigs,
+			Audit:        auditRouter,
 		}).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to register webhook", "webhook", "ServiceAccount")
 			os.Exit(1)

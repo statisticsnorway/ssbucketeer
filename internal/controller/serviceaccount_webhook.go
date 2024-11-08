@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/statisticsnorway/ssbucketeer/internal/audit"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,7 +39,8 @@ func (e IllegalNamespaceError) Error() string {
 
 type ServiceAccountValidator struct {
 	Auth         Auther
-	GroupConfigs []AccessGroupConfig
+	GroupConfigs AccessGroupConfigs
+	Audit        audit.Router
 }
 
 func (m *ServiceAccountValidator) SetupWithManager(mgr ctrl.Manager) error {
@@ -75,6 +77,13 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		return nil, nil
 	}
 
+	groupType := m.GroupConfigs.GetConfig(group)
+	if groupType == nil {
+		return nil, fmt.Errorf("no group config matches %q", group)
+	}
+
+	team := strings.TrimPrefix(group, groupType.Name)
+
 	user := strings.TrimPrefix(sa.Namespace, userNamespacePrefix)
 	if user == sa.Namespace {
 		err := IllegalNamespaceError{Namespace: sa.Namespace, RequestedGroup: group}
@@ -95,27 +104,84 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 	}
 
 	durationStr, hasDuration := sa.Annotations[requestedServiceDurationAnnotation]
-	if hasDuration {
-		parsedDuration, err := time.ParseDuration(durationStr)
-		if err != nil {
-			log.Error(err, "failed to parse ServiceAccount duration", "duration", durationStr)
-			return nil, fmt.Errorf("invalid duration: %s", durationStr)
-		}
+	reason, hasReason := sa.Annotations[accessReasonAnnotation]
 
-		maxDuration := m.getMaxDurationForGroup(group)
-		if parsedDuration > maxDuration {
-			return nil, fmt.Errorf("requested duration %q exceeds max allowed %q for group %q", parsedDuration, maxDuration, group)
-		}
+	if !groupType.ReasonRequired {
+		return nil, nil
+	}
+	if !hasDuration {
+		return nil, fmt.Errorf("duration required for group %q of type %q", group, groupType.Name)
+	}
+
+	parsedDuration, err := time.ParseDuration(durationStr)
+	if err != nil {
+		log.Error(err, "failed to parse ServiceAccount duration", "duration", durationStr)
+		return nil, fmt.Errorf("invalid duration: %s", durationStr)
+	}
+
+	if parsedDuration > groupType.MaxDuration {
+		return nil, fmt.Errorf("requested duration %q exceeds max allowed %q for group %q", parsedDuration, groupType.MaxDuration, group)
+	}
+
+	if !hasReason {
+		return nil, fmt.Errorf("reason required for group %q of type %q", group, groupType.Name)
+	}
+
+	chartName, chartVersion := getChartNameAndVersion(*sa)
+	instanceName, instanceNamespace := getInstanceMeta(*sa)
+
+	auditEntry := audit.Payload{
+		UserPrincipalName: user,
+		TeamName:          team,
+		AccessGroup:       group,
+		GroupType:         groupType.Name,
+		Reason:            reason,
+		StartTime:         sa.CreationTimestamp.Time,
+		EndTime:           sa.CreationTimestamp.Add(parsedDuration),
+		Duration:          parsedDuration,
+		Service: audit.Service{
+			Chart: audit.ChartMeta{
+				Name:    chartName,
+				Version: chartVersion,
+			},
+			Instance: audit.InstanceMeta{
+				Name:      instanceName,
+				Namespace: instanceNamespace,
+			},
+		},
+	}
+
+	if auditErr := m.Audit.RecordAll(auditEntry); auditErr != nil {
+		log.Error(auditErr, "error delivering audit payload to one or more sinks", "payload", auditEntry)
 	}
 
 	return nil, nil
 }
 
-func (m *ServiceAccountValidator) getMaxDurationForGroup(group string) time.Duration {
-	for _, config := range m.GroupConfigs {
-		if strings.HasSuffix(group, config.Name) {
-			return config.MaxDuration
-		}
+func getChartNameAndVersion(sa corev1.ServiceAccount) (name string, version string) {
+	const helmMetaLabel = "helm.sh/chart"
+	if meta, ok := sa.Labels[helmMetaLabel]; ok {
+		split := strings.Split(meta, "-")
+		return strings.Join(split[:len(split)-1], "-"), split[len(split)-1]
 	}
-	return 0
+	return "unknown", "unknown"
+}
+
+func getInstanceMeta(sa corev1.ServiceAccount) (name string, namespace string) {
+	const (
+		helmNameAnnotation      = "meta.helm.sh/release-name"
+		helmNamespaceAnnotation = "meta.helm.sh/release-namespace"
+	)
+
+	name, ok := sa.Annotations[helmNameAnnotation]
+	if !ok {
+		name = "unknown"
+	}
+
+	namespace, ok = sa.Annotations[helmNamespaceAnnotation]
+	if !ok {
+		namespace = "unknown"
+	}
+
+	return name, namespace
 }

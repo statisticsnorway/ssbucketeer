@@ -86,3 +86,14 @@ type ProjectTemplateData struct {
 	TeamName string
 	Stage    string
 }
+
+type AccessGroupConfigs []AccessGroupConfig
+
+func (cs AccessGroupConfigs) GetConfig(group string) *AccessGroupConfig {
+	for _, c := range cs {
+		if team := strings.TrimSuffix(group, c.Name); team != group {
+			return &c
+		}
+	}
+	return nil
+}
