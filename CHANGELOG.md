@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.34](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.33...v0.0.34) (2024-11-08)
+
+
+### Features
+
+* external audit logging ([#56](https://github.com/statisticsnorway/ssbucketeer/issues/56)) ([962f007](https://github.com/statisticsnorway/ssbucketeer/commit/962f0073d9b319e9492320b9c799629bb19efec3))
+
 ## [0.0.33](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.32...v0.0.33) (2024-11-07)
 
 
