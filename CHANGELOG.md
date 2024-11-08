@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.35](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.34...v0.0.35) (2024-11-08)
+
+
+### Bug Fixes
+
+* add yaml struct tags to auditSink ([bfa8edf](https://github.com/statisticsnorway/ssbucketeer/commit/bfa8edf5dee1805a046fbef125f0697424192376))
+* remove extraneous call to handleServiceAccount ([#55](https://github.com/statisticsnorway/ssbucketeer/issues/55)) ([9907aec](https://github.com/statisticsnorway/ssbucketeer/commit/9907aecc348c60e930c5c36a3392323a4b48029f))
+
 ## [0.0.34](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.33...v0.0.34) (2024-11-08)
 
 
