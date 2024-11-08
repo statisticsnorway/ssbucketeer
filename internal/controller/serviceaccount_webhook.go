@@ -37,13 +37,6 @@ func (e IllegalNamespaceError) Error() string {
 	return fmt.Sprintf("attempted to impersonate group %q from non-user namespace %q", e.RequestedGroup, e.Namespace)
 }
 
-type eventType uint
-
-const (
-	createEvent eventType = iota + 1
-	updateEvent
-)
-
 type ServiceAccountValidator struct {
 	Auth         Auther
 	GroupConfigs AccessGroupConfigs
@@ -58,11 +51,11 @@ func (m *ServiceAccountValidator) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (m *ServiceAccountValidator) ValidateCreate(ctx context.Context, req runtime.Object) (admission.Warnings, error) {
-	return m.validate(ctx, req, createEvent)
+	return m.validate(ctx, req)
 }
 
 func (m *ServiceAccountValidator) ValidateUpdate(ctx context.Context, old, new runtime.Object) (admission.Warnings, error) {
-	return m.validate(ctx, new, updateEvent)
+	return m.validate(ctx, new)
 }
 
 func (m *ServiceAccountValidator) ValidateDelete(ctx context.Context, req runtime.Object) (admission.Warnings, error) {
@@ -71,7 +64,7 @@ func (m *ServiceAccountValidator) ValidateDelete(ctx context.Context, req runtim
 
 // validate checks if a group impersonation is requested, and, if so, whether the user (namespace)
 // is allowed to impersonate that group and whether the duration is within the allowed limit.
-func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Object, evt eventType) (admission.Warnings, error) {
+func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Object) (admission.Warnings, error) {
 	log := klog.FromContext(ctx)
 
 	sa, ok := req.(*corev1.ServiceAccount)
@@ -137,31 +130,29 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 	chartName, chartVersion := getChartNameAndVersion(*sa)
 	instanceName, instanceNamespace := getInstanceMeta(*sa)
 
-	if evt == createEvent {
-		auditEntry := audit.Payload{
-			UserPrincipalName: user,
-			TeamName:          team,
-			AccessGroup:       group,
-			GroupType:         groupType.Name,
-			Reason:            reason,
-			StartTime:         sa.CreationTimestamp.Time,
-			EndTime:           sa.CreationTimestamp.Add(parsedDuration),
-			Duration:          parsedDuration.String(),
-			Service: audit.Service{
-				Chart: audit.ChartMeta{
-					Name:    chartName,
-					Version: chartVersion,
-				},
-				Instance: audit.InstanceMeta{
-					Name:      instanceName,
-					Namespace: instanceNamespace,
-				},
+	auditEntry := audit.Payload{
+		UserPrincipalName: user,
+		TeamName:          team,
+		AccessGroup:       group,
+		GroupType:         groupType.Name,
+		Reason:            reason,
+		StartTime:         sa.CreationTimestamp.Time,
+		EndTime:           sa.CreationTimestamp.Add(parsedDuration),
+		Duration:          parsedDuration.String(),
+		Service: audit.Service{
+			Chart: audit.ChartMeta{
+				Name:    chartName,
+				Version: chartVersion,
 			},
-		}
+			Instance: audit.InstanceMeta{
+				Name:      instanceName,
+				Namespace: instanceNamespace,
+			},
+		},
+	}
 
-		if auditErr := m.Audit.RecordAll(auditEntry); auditErr != nil {
-			log.Error(auditErr, "error delivering audit payload to one or more sinks", "payload", auditEntry)
-		}
+	if auditErr := m.Audit.RecordAll(auditEntry); auditErr != nil {
+		log.Error(auditErr, "error delivering audit payload to one or more sinks", "payload", auditEntry)
 	}
 
 	return nil, nil
