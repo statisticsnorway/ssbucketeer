@@ -2,7 +2,7 @@ package audit
 
 import (
 	"context"
-	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -39,12 +39,10 @@ func (r *CloudLogging) Record(p Payload) error {
 	if err != nil {
 		return err
 	}
-	h := sha256.New()
-	h.Write([]byte(idString))
 	r.Logger.Log(logging.Entry{
 		Payload:   p,
 		Timestamp: p.StartTime,
-		InsertID:  string(h.Sum(nil)),
+		InsertID:  base64.StdEncoding.EncodeToString(idString),
 	})
 	return nil
 }
