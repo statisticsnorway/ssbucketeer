@@ -89,7 +89,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		return nil, fmt.Errorf("no group config matches %q", group)
 	}
 
-	team := strings.TrimPrefix(group, groupType.Name)
+	team := strings.TrimSuffix(group, groupType.Name)
 
 	user := strings.TrimPrefix(sa.Namespace, userNamespacePrefix)
 	if user == sa.Namespace {
