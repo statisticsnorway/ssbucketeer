@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"path"
+	"sync"
 
 	"cloud.google.com/go/storage"
 	"golang.org/x/exp/maps"
@@ -28,8 +31,26 @@ func main() {
 	// folder, as blob storage does not really have folders..
 	err = pc.PopulateAllBucketFolders(ctx, "/buckets")
 	if err != nil {
-		fmt.Printf("populate bucket folders: %v", err)
+		log.Printf("populate bucket folders: %v", err)
 	}
+
+	var mu sync.Mutex
+	http.HandleFunc("/refresh-folders", func(w http.ResponseWriter, r *http.Request) {
+		if ok := mu.TryLock(); !ok {
+			w.WriteHeader(http.StatusTooManyRequests)
+			w.Write(nil)
+			return
+		}
+		defer mu.Unlock()
+		if err := pc.PopulateAllBucketFolders(ctx, "/buckets"); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "error populating folders: %s", err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	log.Fatal(http.ListenAndServe(":8383", nil))
 }
 
 // Precreator contains functionality for creating an identical folder structure
