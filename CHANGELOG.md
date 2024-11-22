@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.41](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.40...v0.0.41) (2024-11-22)
+
+
+### Features
+
+* add refresh-folder endpoint to precreator ([#68](https://github.com/statisticsnorway/ssbucketeer/issues/68)) ([ca080d2](https://github.com/statisticsnorway/ssbucketeer/commit/ca080d25481f09e661d2dc4b3bc0952483ebcc17))
+
+
+### Bug Fixes
+
+* Dockerfile.iam-probe to reduce vulnerabilities ([#65](https://github.com/statisticsnorway/ssbucketeer/issues/65)) ([04022dd](https://github.com/statisticsnorway/ssbucketeer/commit/04022dd8d208a8ec0b1afc111d4a500a0de93c8f))
+
 ## [0.0.40](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.39...v0.0.40) (2024-11-08)
 
 
