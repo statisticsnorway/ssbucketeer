@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.42](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.41...v0.0.42) (2024-11-27)
+
+
+### Features
+
+* mount a script for refreshing buckets in statefulsets ([#69](https://github.com/statisticsnorway/ssbucketeer/issues/69)) ([a58e373](https://github.com/statisticsnorway/ssbucketeer/commit/a58e37377a4e369cc1fac0bfb7e44dcb2fa43cd2))
+
 ## [0.0.41](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.40...v0.0.41) (2024-11-22)
 
 
