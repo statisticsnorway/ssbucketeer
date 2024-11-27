@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.43](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.42...v0.0.43) (2024-11-27)
+
+
+### Bug Fixes
+
+* grant create permission on configmaps ([2071e84](https://github.com/statisticsnorway/ssbucketeer/commit/2071e84547cdb2ebb33641c95360187ffa4f0dca))
+
 ## [0.0.42](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.41...v0.0.42) (2024-11-27)
 
 
