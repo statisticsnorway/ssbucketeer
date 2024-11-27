@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.45](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.44...v0.0.45) (2024-11-27)
+
+
+### Bug Fixes
+
+* remove configmap stuff from sts webhook ([76a362f](https://github.com/statisticsnorway/ssbucketeer/commit/76a362f797ae34be27bfc669f624691a93ec6a70))
+
 ## [0.0.44](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.43...v0.0.44) (2024-11-27)
 
 
