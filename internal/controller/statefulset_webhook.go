@@ -31,6 +31,7 @@ import (
 //+kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=update
 
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;update;patch
 
 //+kubebuilder:webhook:path=/mutate-apps-v1-statefulset,mutating=true,failurePolicy=fail,groups=apps,resources=statefulsets,verbs=create;update,versions=v1,name=mstatefulset.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
 
