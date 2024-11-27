@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.44](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.43...v0.0.44) (2024-11-27)
+
+
+### Bug Fixes
+
+* move configmap mounting to job controller ([296888c](https://github.com/statisticsnorway/ssbucketeer/commit/296888c17d1a3ddc9641ed20ef1b1d084e2c6201))
+
 ## [0.0.43](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.42...v0.0.43) (2024-11-27)
 
 
