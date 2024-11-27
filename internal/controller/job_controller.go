@@ -18,12 +18,16 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -90,6 +94,55 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	sfs.Spec.Replicas = ptr[int32](int32(replicas))
 	sfs.Annotations[iamProbeStatus] = iamProbeDone
+
+	// Find the service container, so we can add volumeMounts
+	containerIndex := slices.IndexFunc(sfs.Spec.Template.Spec.Containers, func(c corev1.Container) bool {
+		return c.Name == sfs.Annotations[serviceContainerAnnotation]
+	})
+
+	if containerIndex == -1 {
+		err := fmt.Errorf("could not find container with name %q", sfs.Annotations[serviceContainerAnnotation])
+		log.Error(err, "could not find service container")
+		return ctrl.Result{}, err
+	}
+	refreshBucketsConfigMap := corev1.ConfigMap{
+		Data: map[string]string{
+			"refresh-buckets": "#!/bin/bash\ncurl http://localhost:8383/refresh-folders",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: sfs.Namespace,
+			Name:      fmt.Sprintf("%s-refresh-buckets", sfs.Name),
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind:       "StatefulSet",
+					APIVersion: "apps/v1",
+					Name:       sfs.Name,
+					UID:        sfs.UID,
+				},
+			},
+		},
+	}
+	if err = r.Create(ctx, &refreshBucketsConfigMap); err != nil {
+		return ctrl.Result{}, err
+	}
+	refreshBucketsVolume := corev1.Volume{
+		Name: "refresh-buckets-command",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: refreshBucketsConfigMap.Name,
+				},
+				DefaultMode: ptr[int32](0o555), // Read, execute
+			},
+		},
+	}
+	refreshBucketsVolumeMount := corev1.VolumeMount{
+		Name:      refreshBucketsVolume.Name,
+		MountPath: "/usr/bin/refresh-buckets",
+		SubPath:   "refresh-buckets",
+	}
+	sfs.Spec.Template.Spec.Volumes = append(sfs.Spec.Template.Spec.Volumes, refreshBucketsVolume)
+	sfs.Spec.Template.Spec.Containers[containerIndex].VolumeMounts = append(sfs.Spec.Template.Spec.Containers[containerIndex].VolumeMounts, refreshBucketsVolumeMount)
 
 	if err := r.Update(ctx, &sfs); err != nil {
 		if apierrors.IsConflict(err) {
