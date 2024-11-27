@@ -218,6 +218,45 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 	}
 
+	refreshBucketsConfigMap := corev1.ConfigMap{
+		Data: map[string]string{
+			"refresh-buckets": "#!/bin/bash\ncurl http://localhost:8383/refresh-folders",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: sfs.Namespace,
+			Name:      fmt.Sprintf("%s-refresh-buckets", sfs.Name),
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Kind:       "StatefulSet",
+					APIVersion: "apps/v1",
+					Name:       sfs.Name,
+					UID:        sfs.UID,
+				},
+			},
+		},
+	}
+	if err = m.Client.Create(ctx, &refreshBucketsConfigMap); err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
+	}
+	refreshBucketsVolume := corev1.Volume{
+		Name: "refresh-buckets-command",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: refreshBucketsConfigMap.Name,
+				},
+				DefaultMode: ptr[int32](0o555), // Read, execute
+			},
+		},
+	}
+	refreshBucketsVolumeMount := corev1.VolumeMount{
+		Name:      refreshBucketsVolume.Name,
+		MountPath: "/usr/bin/refresh-buckets",
+		SubPath:   "refresh-buckets",
+	}
+	sfs.Spec.Template.Spec.Volumes = append(sfs.Spec.Template.Spec.Volumes, refreshBucketsVolume)
+	sfs.Spec.Template.Spec.Containers[containerIndex].VolumeMounts = append(sfs.Spec.Template.Spec.Containers[containerIndex].VolumeMounts, refreshBucketsVolumeMount)
+
 	marshaledStatefulSet, err := json.Marshal(sfs)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
