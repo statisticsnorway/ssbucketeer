@@ -77,6 +77,10 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		return nil, nil
 	}
 
+	if !sa.GetDeletionTimestamp().IsZero() {
+		return nil, nil
+	}
+
 	groupType := m.GroupConfigs.GetConfig(group)
 	if groupType == nil {
 		return nil, fmt.Errorf("no group config matches %q", group)

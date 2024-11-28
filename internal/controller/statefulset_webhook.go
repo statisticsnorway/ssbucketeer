@@ -66,6 +66,10 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
+	if !sfs.GetDeletionTimestamp().IsZero() {
+		return admission.Allowed("statefulset is being deleted")
+	}
+
 	if sfs.Annotations[enabledssbucketeerAnnotation] != "true" {
 		return admission.Allowed("skipping ssbucketeer mutation")
 	}
