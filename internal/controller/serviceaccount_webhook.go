@@ -40,7 +40,7 @@ func (e IllegalNamespaceError) Error() string {
 type ServiceAccountValidator struct {
 	Auth         Auther
 	GroupConfigs AccessGroupConfigs
-	Audit        audit.Router
+	Audit        *audit.Router
 	Stage        string
 }
 
