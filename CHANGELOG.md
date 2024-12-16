@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.47](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.46...v0.0.47) (2024-12-16)
+
+
+### Bug Fixes
+
+* close object writer after writing file ([#79](https://github.com/statisticsnorway/ssbucketeer/issues/79)) ([3b4863e](https://github.com/statisticsnorway/ssbucketeer/commit/3b4863e324e30569b29e5689453e743d6e4e8dd6))
+
 ## [0.0.46](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.45...v0.0.46) (2024-12-16)
 
 
