@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -15,6 +16,7 @@ type Payload struct {
 	EndTime           time.Time
 	Duration          string
 	Service           Service
+	Stage             string
 }
 
 type Service struct {
@@ -33,16 +35,16 @@ type InstanceMeta struct {
 }
 
 type Sink interface {
-	Record(Payload) error
+	Record(context.Context, Payload) error
 	Flush() error
 }
 
 type Router []Sink
 
-func (rs Router) RecordAll(p Payload) error {
+func (rs Router) RecordAll(ctx context.Context, p Payload) error {
 	var err error
 	for _, r := range rs {
-		err = errors.Join(err, r.Record(p))
+		err = errors.Join(err, r.Record(ctx, p))
 	}
 	return err
 }

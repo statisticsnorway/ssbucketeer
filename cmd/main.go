@@ -206,10 +206,17 @@ func main() {
 		case "cloudlogging":
 			cl, err := audit.NewCloudLoggingSink(ctx, sink.Config)
 			if err != nil {
-				setupLog.Error(err, "failed to configure cloud logging router", "sink.Config", sink.Config)
+				setupLog.Error(err, "failed to configure cloud logging sink", "sink.Config", sink.Config)
 				os.Exit(1)
 			}
 			auditRouter = append(auditRouter, cl)
+		case "cloudstorage":
+			cs, err := audit.NewCloudStorageSink(ctx, sink.Config)
+			if err != nil {
+				setupLog.Error(err, "failed to configure cloud storage sink", "sink.Config", sink.Config)
+				os.Exit(1)
+			}
+			auditRouter = append(auditRouter, cs)
 		}
 	}
 	defer func() {
@@ -237,6 +244,7 @@ func main() {
 			Auth:         gAuth,
 			GroupConfigs: cfg.GroupConfigs,
 			Audit:        auditRouter,
+			Stage:        cfg.Stage,
 		}).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to register webhook", "webhook", "ServiceAccount")
 			os.Exit(1)

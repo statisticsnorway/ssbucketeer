@@ -34,7 +34,7 @@ func NewCloudLoggingSink(ctx context.Context, config map[string]string) (*CloudL
 	return &CloudLogging{Logger: client.Logger(logName)}, nil
 }
 
-func (r *CloudLogging) Record(p Payload) error {
+func (r *CloudLogging) Record(ctx context.Context, p Payload) error {
 	idString, err := json.Marshal(p)
 	if err != nil {
 		return err
