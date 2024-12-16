@@ -200,7 +200,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var auditRouter audit.Router
+	var sinks []audit.Sink
 	for _, sink := range cfg.AuditSinks {
 		switch sink.Type {
 		case "cloudlogging":
@@ -209,16 +209,17 @@ func main() {
 				setupLog.Error(err, "failed to configure cloud logging sink", "sink.Config", sink.Config)
 				os.Exit(1)
 			}
-			auditRouter = append(auditRouter, cl)
+			sinks = append(sinks, cl)
 		case "cloudstorage":
 			cs, err := audit.NewCloudStorageSink(ctx, sink.Config)
 			if err != nil {
 				setupLog.Error(err, "failed to configure cloud storage sink", "sink.Config", sink.Config)
 				os.Exit(1)
 			}
-			auditRouter = append(auditRouter, cs)
+			sinks = append(sinks, cs)
 		}
 	}
+	auditRouter := audit.NewRouter(sinks...)
 	defer func() {
 		if err := auditRouter.FlushAll(); err != nil {
 			ctrl.Log.Error(err, "error flushing audit log sinks")
