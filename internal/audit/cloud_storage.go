@@ -66,7 +66,11 @@ func (s *CloudStorage) Record(ctx context.Context, p Payload) error {
 	objectHandle := s.Bucket.Object(filenameBuilder.String())
 	objectWriter := objectHandle.NewWriter(ctx)
 	objectEncoder := json.NewEncoder(objectWriter)
-	return objectEncoder.Encode(p)
+	if err := objectEncoder.Encode(p); err != nil {
+		return err
+	}
+
+	return objectWriter.Close()
 }
 
 func (s *CloudStorage) Flush() error {
