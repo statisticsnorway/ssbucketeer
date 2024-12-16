@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.46](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.45...v0.0.46) (2024-12-16)
+
+
+### Features
+
+* cloud storage logging sink ([#78](https://github.com/statisticsnorway/ssbucketeer/issues/78)) ([a65d955](https://github.com/statisticsnorway/ssbucketeer/commit/a65d955fbe443534a4ed250ceff71c37661a03e3))
+
+
+### Bug Fixes
+
+* skip webhooks if deletion has been requested ([#74](https://github.com/statisticsnorway/ssbucketeer/issues/74)) ([3ceeb6b](https://github.com/statisticsnorway/ssbucketeer/commit/3ceeb6b78961ffef109d347e6406d8b71452cbc7)), closes [#67](https://github.com/statisticsnorway/ssbucketeer/issues/67)
+
 ## [0.0.45](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.44...v0.0.45) (2024-11-27)
 
 
