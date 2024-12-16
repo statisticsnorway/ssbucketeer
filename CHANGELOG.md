@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.48](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.47...v0.0.48) (2024-12-16)
+
+
+### Bug Fixes
+
+* bake audit entry deduplication into Router ([#81](https://github.com/statisticsnorway/ssbucketeer/issues/81)) ([8677a63](https://github.com/statisticsnorway/ssbucketeer/commit/8677a63a71b946517e24e30fe0a6270868f4b289))
+
 ## [0.0.47](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.46...v0.0.47) (2024-12-16)
 
 
