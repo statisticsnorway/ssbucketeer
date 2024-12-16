@@ -16,6 +16,7 @@ type Payload struct {
 	EndTime           time.Time
 	Duration          string
 	Service           Service
+	Stage             string
 }
 
 type Service struct {

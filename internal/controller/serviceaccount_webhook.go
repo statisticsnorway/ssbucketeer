@@ -41,6 +41,7 @@ type ServiceAccountValidator struct {
 	Auth         Auther
 	GroupConfigs AccessGroupConfigs
 	Audit        audit.Router
+	Stage        string
 }
 
 func (m *ServiceAccountValidator) SetupWithManager(mgr ctrl.Manager) error {
@@ -153,6 +154,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 				Namespace: instanceNamespace,
 			},
 		},
+		Stage: m.Stage,
 	}
 
 	if auditErr := m.Audit.RecordAll(ctx, auditEntry); auditErr != nil {

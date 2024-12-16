@@ -244,6 +244,7 @@ func main() {
 			Auth:         gAuth,
 			GroupConfigs: cfg.GroupConfigs,
 			Audit:        auditRouter,
+			Stage:        cfg.Stage,
 		}).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to register webhook", "webhook", "ServiceAccount")
 			os.Exit(1)
