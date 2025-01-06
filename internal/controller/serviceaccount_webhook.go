@@ -82,12 +82,12 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		return nil, nil
 	}
 
-	groupType := m.GroupConfigs.GetConfig(group)
-	if groupType == nil {
+	groupConfig := m.GroupConfigs.GetConfig(group)
+	if groupConfig == nil {
 		return nil, fmt.Errorf("no group config matches %q", group)
 	}
 
-	team := strings.TrimSuffix(strings.TrimSuffix(group, groupType.Name), "-")
+	team := groupConfig.ToTeam(group)
 
 	user := strings.TrimPrefix(sa.Namespace, userNamespacePrefix)
 	if user == sa.Namespace {
@@ -111,25 +111,26 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 	durationStr, hasDuration := sa.Annotations[requestedServiceDurationAnnotation]
 	reason, hasReason := sa.Annotations[accessReasonAnnotation]
 
-	if !groupType.ReasonRequired {
+	if !groupConfig.ReasonRequired {
 		return nil, nil
 	}
+
 	if !hasDuration {
-		return nil, fmt.Errorf("duration required for group %q of type %q", group, groupType.Name)
+		return nil, fmt.Errorf("duration required for group %q of type %q", group, groupConfig.Name)
 	}
 
 	parsedDuration, err := time.ParseDuration(durationStr)
 	if err != nil {
 		log.Error(err, "failed to parse ServiceAccount duration", "duration", durationStr)
-		return nil, fmt.Errorf("invalid duration: %s", durationStr)
+		return nil, fmt.Errorf("invalid duration: %q", durationStr)
 	}
 
-	if parsedDuration > groupType.MaxDuration {
-		return nil, fmt.Errorf("requested duration %q exceeds max allowed %q for group %q", parsedDuration, groupType.MaxDuration, group)
+	if parsedDuration > groupConfig.MaxDuration {
+		return nil, fmt.Errorf("requested duration %q exceeds max allowed %q for group %q", parsedDuration, groupConfig.MaxDuration, group)
 	}
 
 	if !hasReason || reason == "" {
-		return nil, fmt.Errorf("reason required for group %q of type %q", group, groupType.Name)
+		return nil, fmt.Errorf("reason required for group %q of type %q", group, groupConfig.Name)
 	}
 
 	chartName, chartVersion := getChartNameAndVersion(*sa)
@@ -139,7 +140,7 @@ func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Obje
 		UserPrincipalName: user,
 		TeamName:          team,
 		AccessGroup:       group,
-		GroupType:         groupType.Name,
+		GroupType:         groupConfig.Name,
 		Reason:            reason,
 		StartTime:         sa.CreationTimestamp.Time,
 		EndTime:           sa.CreationTimestamp.Add(parsedDuration),

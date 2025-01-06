@@ -3,13 +3,11 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"net/http"
 	"slices"
 	"strings"
-	"time"
 
 	rm "cloud.google.com/go/resourcemanager/apiv3"
 	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
@@ -70,156 +68,61 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		return admission.Allowed("statefulset is being deleted")
 	}
 
-	if sfs.Annotations[enabledssbucketeerAnnotation] != "true" {
+	group, ok := sfs.Annotations[impersonateGroupAnnotation]
+	if !ok {
 		return admission.Allowed("skipping ssbucketeer mutation")
 	}
 
 	ensurePodAnnotations(&sfs.Spec.Template)
 
-	// 1. Check if we want to impersonate a group SA
-	group, hasGroupAnnotation := sfs.Annotations[impersonateGroupAnnotation]
-	if hasGroupAnnotation {
-		saAnnotations := map[string]string{
-			impersonateGroupAnnotation: group,
-		}
-
-		groupConfig := m.GroupConfigs.GetConfig(group)
-		if groupConfig == nil {
-			return admission.Denied(fmt.Sprintf("no configuration found for group: %s", group))
-		}
-
-		if groupConfig.ReasonRequired {
-			reason, hasReason := sfs.Annotations[accessReasonAnnotation]
-			if !hasReason || reason == "" {
-				return admission.Denied(fmt.Sprintf("reason is required for access group: %q", group))
-			}
-			saAnnotations[accessReasonAnnotation] = reason
-			log.Info("Reason provided for access group", "group", group, "reason", reason)
-		}
-
-		if groupConfig.MaxDuration > 0 {
-			durationString, ok := sfs.Annotations[requestedServiceDurationAnnotation]
-			if !ok {
-				return admission.Denied(fmt.Sprintf("access duration required for group %q", group))
-			}
-
-			duration, err := time.ParseDuration(durationString)
-			if err != nil {
-				log.Error(err, "failed to parse requested-duration", "duration", durationString)
-				return admission.Denied(fmt.Sprintf("invalid requested duration %q", durationString))
-			}
-
-			if duration > groupConfig.MaxDuration {
-				log.Info("attempt to start service with longer than max duration, defaulting to max",
-					"duration", duration,
-					"group", group,
-					"maxDuration", groupConfig.MaxDuration)
-				duration = groupConfig.MaxDuration
-				sfs.Annotations[requestedServiceDurationAnnotation] = duration.String()
-			}
-
-			saAnnotations[requestedServiceDurationAnnotation] = duration.String()
-
-		}
-
-		// Handle IAM bindings and k8s SA annotations
-		if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
-			log.Error(err, "handle serviceaccount")
-			return admission.Denied("error handling service account")
-		}
-	}
-
-	// 2. Mount buckets
-	var bucketNames []string
-	if annotationBuckets, ok := sfs.Annotations[mountBucketsAnnotation]; ok {
-		bucketNames = strings.Split(annotationBuckets, ",")
-	}
-
 	// Find the service container, so we can add volumeMounts
-	containerIndex := slices.IndexFunc(sfs.Spec.Template.Spec.Containers, func(c corev1.Container) bool {
-		return c.Name == sfs.Annotations[serviceContainerAnnotation]
-	})
-
-	if containerIndex == -1 {
+	serviceContainer := getServiceContainer(&sfs.Spec.Template, sfs.Annotations[serviceContainerAnnotation])
+	if serviceContainer == nil {
 		err := fmt.Errorf("could not find container with name %q", sfs.Annotations[serviceContainerAnnotation])
 		log.Error(err, "could not find service container")
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	if hasGroupAnnotation && m.ADCGroupEnvName != "" {
-		containerEnv := &sfs.Spec.Template.Spec.Containers[containerIndex].Env
-		if !slices.ContainsFunc(*containerEnv, func(e corev1.EnvVar) bool {
-			return e.Name == m.ADCGroupEnvName
-		}) {
-			*containerEnv = append(*containerEnv, corev1.EnvVar{Name: m.ADCGroupEnvName, Value: group})
-		}
+	bucketMounts := getExtraBucketMounts(sfs.Annotations)
+
+	saAnnotations := map[string]string{
+		impersonateGroupAnnotation:         group,
+		requestedServiceDurationAnnotation: sfs.Annotations[requestedServiceDurationAnnotation],
+		accessReasonAnnotation:             sfs.Annotations[accessReasonAnnotation],
 	}
 
-	bucketMounts := make(map[string]string, len(bucketNames))
-	for _, bucket := range bucketNames {
-		bucketMounts[bucket] = bucket
+	groupConfig := m.GroupConfigs.GetConfig(group)
+	if groupConfig == nil {
+		return admission.Denied(fmt.Sprintf("no configuration found for group: %s", group))
+	}
+
+	// Handle IAM bindings and k8s SA annotations
+	if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
+		log.Error(err, "handle serviceaccount")
+		return admission.Denied("error handling service account")
+	}
+
+	if m.ADCGroupEnvName != "" {
+		if !slices.ContainsFunc(serviceContainer.Env, func(e corev1.EnvVar) bool {
+			return e.Name == m.ADCGroupEnvName
+		}) {
+			serviceContainer.Env = append(serviceContainer.Env, corev1.EnvVar{Name: m.ADCGroupEnvName, Value: group})
+		}
 	}
 
 	// TODO: Use Dapla Team API for this?
 	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
-		team := group
-		var gc *AccessGroupConfig
-		for _, config := range m.GroupConfigs {
-			if team = strings.TrimSuffix(group, config.Name); team != group {
-				team = strings.TrimSuffix(team, "-")
-				gc = &config
-				break
-			}
-		}
-
-		if team != group {
-			if err := m.addStandardBuckets(ctx, team, *gc, bucketMounts); err != nil {
-				log.Error(err, "failed to add standard buckets")
-			}
-		} else {
-			log.Error(errors.New("could not deduce team from group"), "team could not be deduced from group", "group", group)
+		team := groupConfig.ToTeam(group)
+		if err := m.addStandardBuckets(ctx, team, *groupConfig, bucketMounts); err != nil {
+			log.Error(err, "failed to add standard buckets")
 		}
 	}
 
-	addBucketsToPodSpec(&sfs.Spec.Template.Spec, &sfs.Spec.Template.Spec.Containers[containerIndex], bucketMounts, m.PrecreatorImage)
+	addBucketsToPodSpec(&sfs.Spec.Template.Spec, serviceContainer, bucketMounts, m.PrecreatorImage)
 
 	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
-		sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
-		sfs.Spec.Replicas = ptr[int32](0)
-
-		probeJob := &batchv1.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
-				Namespace: sfs.Namespace,
-				Annotations: map[string]string{
-					probeJobStatefulsetAnnotation: sfs.Name,
-				},
-			},
-			Spec: batchv1.JobSpec{
-				ActiveDeadlineSeconds:   ptr[int64](300),
-				TTLSecondsAfterFinished: ptr[int32](0),
-				Template: corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
-						Annotations: map[string]string{
-							istioExcludedIpRangesAnnotation: gcsfuseOutboundIPRange,
-						},
-					},
-					Spec: corev1.PodSpec{
-						ServiceAccountName: sfs.Spec.Template.Spec.ServiceAccountName,
-						Containers: []corev1.Container{
-							{
-								Image: m.IamProbeImage,
-								Name:  "iam-probe",
-							},
-						},
-						RestartPolicy: corev1.RestartPolicyNever,
-					},
-				},
-			},
-		}
-
-		if err := m.Client.Create(ctx, probeJob); err != nil {
-			log.Error(err, "could not create probe job")
+		if err := m.launchIamProbe(ctx, sfs); err != nil {
+			log.Error(err, "could not start iam probe")
 		}
 	}
 
@@ -228,6 +131,67 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledStatefulSet)
+}
+
+func getExtraBucketMounts(annotations map[string]string) map[string]string {
+	var bucketNames []string
+	if annotationBuckets, ok := annotations[mountBucketsAnnotation]; ok {
+		bucketNames = strings.Split(annotationBuckets, ",")
+	}
+
+	bucketMounts := make(map[string]string, len(bucketNames))
+	for _, bucket := range bucketNames {
+		bucketMounts[bucket] = bucket
+	}
+	return bucketMounts
+}
+
+func getServiceContainer(pod *corev1.PodTemplateSpec, name string) *corev1.Container {
+	idx := slices.IndexFunc(pod.Spec.Containers, func(c corev1.Container) bool {
+		return c.Name == name
+	})
+	if idx == -1 {
+		return nil
+	}
+	return &pod.Spec.Containers[idx]
+}
+
+func (m *StatefulsetMutator) launchIamProbe(ctx context.Context, sfs *appsv1.StatefulSet) error {
+	sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
+	sfs.Spec.Replicas = ptr[int32](0)
+
+	probeJob := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
+			Namespace: sfs.Namespace,
+			Annotations: map[string]string{
+				probeJobStatefulsetAnnotation: sfs.Name,
+			},
+		},
+		Spec: batchv1.JobSpec{
+			ActiveDeadlineSeconds:   ptr[int64](300),
+			TTLSecondsAfterFinished: ptr[int32](0),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						istioExcludedIpRangesAnnotation: gcsfuseOutboundIPRange,
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: sfs.Spec.Template.Spec.ServiceAccountName,
+					Containers: []corev1.Container{
+						{
+							Image: m.IamProbeImage,
+							Name:  "iam-probe",
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+		},
+	}
+
+	return m.Client.Create(ctx, probeJob)
 }
 
 func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace, name string, saAnnotations map[string]string) error {
