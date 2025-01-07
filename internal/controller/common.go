@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	enabledssbucketeerAnnotation       = "dapla.ssb.no/enable-ssbucketeer"
 	impersonateGroupAnnotation         = "dapla.ssb.no/impersonate-group"
 	mountBucketsAnnotation             = "dapla.ssb.no/mount-buckets"
 	mountStandardBucketsAnnotation     = "dapla.ssb.no/mount-standard-buckets"
@@ -80,6 +79,10 @@ type AccessGroupConfig struct {
 	ProjectTemplate projectTemplate `yaml:"projectTemplate"`
 	MaxDuration     time.Duration   `yaml:"maxDuration"`
 	ReasonRequired  bool            `yaml:"reasonRequired"`
+}
+
+func (c AccessGroupConfig) ToTeam(group string) string {
+	return strings.TrimSuffix(strings.TrimSuffix(group, c.Name), "-")
 }
 
 type ProjectTemplateData struct {
