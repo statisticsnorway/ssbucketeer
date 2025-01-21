@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.0](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.48...v0.1.0) (2025-01-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* refactor and simplify statefulset handling ([#83](https://github.com/statisticsnorway/ssbucketeer/issues/83))
+
+### Features
+
+* add group and team label to statefulset ([#86](https://github.com/statisticsnorway/ssbucketeer/issues/86)) ([396d7c2](https://github.com/statisticsnorway/ssbucketeer/commit/396d7c2cfce7d68cc0ce9f1c97daaa9864d22be7))
+
+
+### Bug Fixes
+
+* Dockerfile.iam-probe to reduce vulnerabilities ([#76](https://github.com/statisticsnorway/ssbucketeer/issues/76)) ([3050379](https://github.com/statisticsnorway/ssbucketeer/commit/30503796080bc28c1a4846e27fb35b4a61f270e7))
+
+
+### Code Refactoring
+
+* refactor and simplify statefulset handling ([#83](https://github.com/statisticsnorway/ssbucketeer/issues/83)) ([7be5874](https://github.com/statisticsnorway/ssbucketeer/commit/7be5874cffc962be935721a4e1c0084d238cf2ad))
+
 ## [0.0.48](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.47...v0.0.48) (2024-12-16)
 
 
