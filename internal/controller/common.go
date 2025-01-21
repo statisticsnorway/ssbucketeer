@@ -20,6 +20,9 @@ const (
 	iamProbeRunningPrefix         = "running-replicas-"
 	iamProbeDone                  = "done"
 
+	daplaTeamLabel  = "dapla.ssb.no/team"
+	daplaGroupLabel = "dapla.ssb.no/group"
+
 	istioExcludedIpRangesAnnotation = "traffic.sidecar.istio.io/excludeOutboundIPRanges"
 	gcsfuseOutboundIPRange          = "169.254.169.254/32"
 

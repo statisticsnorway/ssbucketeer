@@ -95,12 +95,19 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	if groupConfig == nil {
 		return admission.Denied(fmt.Sprintf("no configuration found for group: %s", group))
 	}
+	team := groupConfig.ToTeam(group)
 
 	// Handle IAM bindings and k8s SA annotations
 	if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
 		log.Error(err, "handle serviceaccount")
 		return admission.Denied("error handling service account")
 	}
+
+	if sfs.Labels == nil {
+		sfs.Labels = make(map[string]string, 2)
+	}
+	sfs.Labels[daplaTeamLabel] = team
+	sfs.Labels[daplaGroupLabel] = group
 
 	if m.ADCGroupEnvName != "" {
 		if !slices.ContainsFunc(serviceContainer.Env, func(e corev1.EnvVar) bool {
@@ -112,7 +119,6 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	// TODO: Use Dapla Team API for this?
 	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
-		team := groupConfig.ToTeam(group)
 		if err := m.addStandardBuckets(ctx, team, *groupConfig, bucketMounts); err != nil {
 			log.Error(err, "failed to add standard buckets")
 		}
