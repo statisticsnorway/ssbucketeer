@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.0...v0.1.1) (2025-01-23)
+
+
+### Bug Fixes
+
+* set billing labels on pod instead of sfs ([#87](https://github.com/statisticsnorway/ssbucketeer/issues/87)) ([c502cf7](https://github.com/statisticsnorway/ssbucketeer/commit/c502cf7307e864363f8034dd3fe3bae9c6d596a1))
+
 ## [0.1.0](https://github.com/statisticsnorway/ssbucketeer/compare/v0.0.48...v0.1.0) (2025-01-21)
 
 
