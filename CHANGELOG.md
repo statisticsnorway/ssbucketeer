@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.1...v0.1.2) (2025-01-23)
+
+
+### Bug Fixes
+
+* don't set requested-duration on SA if group does not require reason ([#89](https://github.com/statisticsnorway/ssbucketeer/issues/89)) ([8cf5f8f](https://github.com/statisticsnorway/ssbucketeer/commit/8cf5f8f0df70f7b7cb8e84de119de2ae0886a77e))
+
 ## [0.1.1](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.0...v0.1.1) (2025-01-23)
 
 
