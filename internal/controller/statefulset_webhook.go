@@ -103,11 +103,11 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		return admission.Denied("error handling service account")
 	}
 
-	if sfs.Labels == nil {
-		sfs.Labels = make(map[string]string, 2)
+	if sfs.Spec.Template.Labels == nil {
+		sfs.Spec.Template.Labels = make(map[string]string, 2)
 	}
-	sfs.Labels[daplaTeamLabel] = team
-	sfs.Labels[daplaGroupLabel] = group
+	sfs.Spec.Template.Labels[daplaTeamLabel] = team
+	sfs.Spec.Template.Labels[daplaGroupLabel] = group
 
 	if m.ADCGroupEnvName != "" {
 		if !slices.ContainsFunc(serviceContainer.Env, func(e corev1.EnvVar) bool {
