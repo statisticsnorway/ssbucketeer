@@ -97,6 +97,10 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	}
 	team := groupConfig.ToTeam(group)
 
+	if groupConfig.ReasonRequired {
+		saAnnotations[requestedServiceDurationAnnotation] = sfs.Annotations[requestedServiceDurationAnnotation]
+	}
+
 	// Handle IAM bindings and k8s SA annotations
 	if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
 		log.Error(err, "handle serviceaccount")
