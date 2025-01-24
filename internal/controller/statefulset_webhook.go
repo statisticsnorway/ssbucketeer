@@ -86,9 +86,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	bucketMounts := getExtraBucketMounts(sfs.Annotations)
 
 	saAnnotations := map[string]string{
-		impersonateGroupAnnotation:         group,
-		requestedServiceDurationAnnotation: sfs.Annotations[requestedServiceDurationAnnotation],
-		accessReasonAnnotation:             sfs.Annotations[accessReasonAnnotation],
+		impersonateGroupAnnotation: group,
+		accessReasonAnnotation:     sfs.Annotations[accessReasonAnnotation],
 	}
 
 	groupConfig := m.GroupConfigs.GetConfig(group)
