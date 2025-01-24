@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.2...v0.1.3) (2025-01-24)
+
+
+### Bug Fixes
+
+* actually don't set requested-duration ([dd5b1cd](https://github.com/statisticsnorway/ssbucketeer/commit/dd5b1cdad1f213eff86ee7fe28763a82d935959a))
+
 ## [0.1.2](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.1...v0.1.2) (2025-01-23)
 
 
