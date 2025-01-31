@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
@@ -24,7 +25,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 	volumes := make([]corev1.Volume, 0, len(bucketMounts))
 	volumeMounts := make([]corev1.VolumeMount, 0, len(bucketMounts))
 	for mountPoint, bucket := range bucketMounts {
-		volumeName := fmt.Sprintf("gcsfuse-%s", mountPoint)
+		volumeName := fmt.Sprintf("gcsfuse-%s", strings.ReplaceAll(mountPoint, "/", "--"))
 
 		// TODO: Test whether the group has read/write access
 		if !slices.ContainsFunc(podspec.Volumes, volumeNameIs(volumeName)) {
@@ -68,7 +69,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 			Name:  "bucket-folders-precreator",
 		}
 		for mountPoint, bucket := range bucketMounts {
-			volumeName := fmt.Sprintf("gcsfuse-%s", mountPoint)
+			volumeName := fmt.Sprintf("gcsfuse-%s", strings.ReplaceAll(mountPoint, "/", "--"))
 			precreator.VolumeMounts = append(precreator.VolumeMounts, corev1.VolumeMount{
 				Name:      volumeName,
 				MountPath: fmt.Sprintf("/buckets/%s", bucket),
