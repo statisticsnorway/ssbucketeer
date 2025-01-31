@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -92,7 +93,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		replicas = 1
 	}
 
-	sfs.Spec.Replicas = ptr[int32](int32(replicas))
+	sfs.Spec.Replicas = ptr.To(int32(replicas))
 	sfs.Annotations[iamProbeStatus] = iamProbeDone
 
 	// Find the service container, so we can add volumeMounts
@@ -132,7 +133,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: refreshBucketsConfigMap.Name,
 				},
-				DefaultMode: ptr[int32](0o555), // Read, execute
+				DefaultMode: ptr.To[int32](0o555), // Read, execute
 			},
 		},
 	}

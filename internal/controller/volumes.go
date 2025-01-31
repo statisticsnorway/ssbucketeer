@@ -5,12 +5,8 @@ import (
 	"slices"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
-
-// ptr is a convenience function for generating pointers of primitive types
-func ptr[T any](t T) *T {
-	return &t
-}
 
 func volumeNameIs(name string) func(v corev1.Volume) bool {
 	return func(v corev1.Volume) bool {
@@ -37,7 +33,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 				VolumeSource: corev1.VolumeSource{
 					CSI: &corev1.CSIVolumeSource{
 						Driver:   "gcsfuse.csi.storage.gke.io",
-						ReadOnly: ptr(false),
+						ReadOnly: ptr.To(false),
 						VolumeAttributes: map[string]string{
 							"bucketName":             bucket,
 							"mountOptions":           "uid=1000,gid=100",

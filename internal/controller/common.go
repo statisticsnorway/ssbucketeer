@@ -12,6 +12,7 @@ const (
 	impersonateGroupAnnotation         = "dapla.ssb.no/impersonate-group"
 	mountBucketsAnnotation             = "dapla.ssb.no/mount-buckets"
 	mountStandardBucketsAnnotation     = "dapla.ssb.no/mount-standard-buckets"
+	mountSharedBucketsAnnotation       = "dapla.ssb.no/mount-shared-buckets"
 	serviceContainerAnnotation         = "dapla.ssb.no/service-container-name"
 	requestedServiceDurationAnnotation = "dapla.ssb.no/requested-service-duration"
 	accessReasonAnnotation             = "dapla.ssb.no/access-reason"
