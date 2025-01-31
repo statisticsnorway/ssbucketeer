@@ -257,7 +257,7 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 
 	projectName, err := gc.ProjectTemplate.Execute(ProjectTemplateData{TeamName: team, Stage: m.Stage})
 	if err != nil {
-		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.template.Name(), err)
+		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.Name(), err)
 	}
 
 	projectIt := m.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
