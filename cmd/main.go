@@ -52,14 +52,15 @@ import (
 )
 
 type config struct {
-	DaplaGroupSaProjectId string                         `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
-	TeamsFolderNumber     string                         `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
-	Stage                 string                         `env:"STAGE,required,notEmpty"`
-	IamProbeImage         string                         `env:"IAM_PROBE_IMAGE"`
-	PrecreatorImage       string                         `env:"PRECREATOR_IMAGE"`
-	ADCGroupEnvName       string                         `env:"ADC_GROUP_ENV_NAME"`
-	GroupConfigs          []controller.AccessGroupConfig `env:"GROUP_CONFIG,required,notEmpty"`
-	AuditSinks            []auditSink                    `env:"AUDIT_SINKS"`
+	DaplaGroupSaProjectId string                          `env:"DAPLA_GROUP_SA_PROJECT_ID,required,notEmpty"`
+	TeamsFolderNumber     string                          `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
+	Stage                 string                          `env:"STAGE,required,notEmpty"`
+	IamProbeImage         string                          `env:"IAM_PROBE_IMAGE"`
+	PrecreatorImage       string                          `env:"PRECREATOR_IMAGE"`
+	ADCGroupEnvName       string                          `env:"ADC_GROUP_ENV_NAME"`
+	GroupConfigs          []controller.AccessGroupConfig  `env:"GROUP_CONFIG,required,notEmpty"`
+	AuditSinks            []auditSink                     `env:"AUDIT_SINKS"`
+	SharedBucketTemplate  controller.SharedBucketTemplate `env:"SHARED_BUCKET_TEMPLATE" envDefault:"ssb-{{.TeamName}}-data-delt-{{.BucketShortName}}-{{.Stage}}"`
 }
 
 type auditSink struct {
@@ -228,17 +229,18 @@ func main() {
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		(&controller.StatefulsetMutator{
-			Client:            mgr.GetClient(),
-			Decoder:           admission.NewDecoder(mgr.GetScheme()),
-			Storage:           storageClient,
-			Projects:          projectsClient,
-			Folders:           foldersClient,
-			TeamsFolderNumber: cfg.TeamsFolderNumber,
-			Stage:             cfg.Stage,
-			IamProbeImage:     cfg.IamProbeImage,
-			PrecreatorImage:   cfg.PrecreatorImage,
-			ADCGroupEnvName:   cfg.ADCGroupEnvName,
-			GroupConfigs:      cfg.GroupConfigs,
+			Client:               mgr.GetClient(),
+			Decoder:              admission.NewDecoder(mgr.GetScheme()),
+			Storage:              storageClient,
+			Projects:             projectsClient,
+			Folders:              foldersClient,
+			TeamsFolderNumber:    cfg.TeamsFolderNumber,
+			Stage:                cfg.Stage,
+			IamProbeImage:        cfg.IamProbeImage,
+			PrecreatorImage:      cfg.PrecreatorImage,
+			ADCGroupEnvName:      cfg.ADCGroupEnvName,
+			GroupConfigs:         cfg.GroupConfigs,
+			SharedBucketTemplate: cfg.SharedBucketTemplate,
 		}).SetupWithManager(mgr)
 
 		if err = (&controller.ServiceAccountValidator{

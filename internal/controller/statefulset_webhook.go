@@ -12,12 +12,14 @@ import (
 	rm "cloud.google.com/go/resourcemanager/apiv3"
 	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
 	"cloud.google.com/go/storage"
+	"github.com/statisticsnorway/ssbucketeer/internal/template"
 	"google.golang.org/api/iterator"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -50,6 +52,13 @@ type StatefulsetMutator struct {
 	ADCGroupEnvName   string
 
 	GroupConfigs AccessGroupConfigs
+
+	SharedBucketTemplate template.AnonymousTemplate[SharedBucketTemplateData]
+}
+
+type SharedBucketSpec struct {
+	Team      string `json:"team"`
+	ShortName string `json:"sharedBucket"`
 }
 
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
@@ -120,6 +129,12 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 	}
 
+	if sharedBuckets, ok := sfs.Annotations[mountSharedBucketsAnnotation]; ok {
+		if err := m.addSharedBuckets(bucketMounts, sharedBuckets); err != nil {
+			log.Error(err, "failed to add shared buckets")
+		}
+	}
+
 	// TODO: Use Dapla Team API for this?
 	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
 		if err := m.addStandardBuckets(ctx, team, *groupConfig, bucketMounts); err != nil {
@@ -167,7 +182,7 @@ func getServiceContainer(pod *corev1.PodTemplateSpec, name string) *corev1.Conta
 
 func (m *StatefulsetMutator) launchIamProbe(ctx context.Context, sfs *appsv1.StatefulSet) error {
 	sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
-	sfs.Spec.Replicas = ptr[int32](0)
+	sfs.Spec.Replicas = ptr.To[int32](0)
 
 	probeJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -178,8 +193,8 @@ func (m *StatefulsetMutator) launchIamProbe(ctx context.Context, sfs *appsv1.Sta
 			},
 		},
 		Spec: batchv1.JobSpec{
-			ActiveDeadlineSeconds:   ptr[int64](300),
-			TTLSecondsAfterFinished: ptr[int32](0),
+			ActiveDeadlineSeconds:   ptr.To[int64](300),
+			TTLSecondsAfterFinished: ptr.To[int32](0),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
@@ -257,7 +272,7 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 
 	projectName, err := gc.ProjectTemplate.Execute(ProjectTemplateData{TeamName: team, Stage: m.Stage})
 	if err != nil {
-		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.template.Name(), err)
+		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.Name(), err)
 	}
 
 	projectIt := m.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
@@ -288,6 +303,28 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 		bucketMounts[withoutPrefix] = bucket.Name
 	}
 
+	return nil
+}
+
+func (m *StatefulsetMutator) addSharedBuckets(bucketMounts map[string]string, sharedBuckets string) error {
+	bucketSpecs := []SharedBucketSpec{}
+
+	if err := json.Unmarshal([]byte(sharedBuckets), &bucketSpecs); err != nil {
+		return err
+	}
+
+	for _, bucket := range bucketSpecs {
+		mountPoint := fmt.Sprintf("shared/%s/%s", bucket.Team, bucket.ShortName)
+		bucket, err := m.SharedBucketTemplate.Execute(SharedBucketTemplateData{
+			TeamName:        bucket.Team,
+			BucketShortName: bucket.ShortName,
+			Stage:           m.Stage,
+		})
+		if err != nil {
+			return err
+		}
+		bucketMounts[mountPoint] = bucket
+	}
 	return nil
 }
 
