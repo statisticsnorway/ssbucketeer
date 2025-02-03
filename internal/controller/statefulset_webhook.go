@@ -56,6 +56,11 @@ type StatefulsetMutator struct {
 	SharedBucketTemplate template.AnonymousTemplate[SharedBucketTemplateData]
 }
 
+type SharedBucketSpec struct {
+	Team      string `json:"team"`
+	ShortName string `json:"sharedBucket"`
+}
+
 func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register("/mutate-apps-v1-statefulset", &admission.Webhook{Handler: m})
 }
@@ -302,10 +307,7 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 }
 
 func (m *StatefulsetMutator) addSharedBuckets(bucketMounts map[string]string, sharedBuckets string) error {
-	bucketSpecs := []struct {
-		Team      string `json:"team"`
-		ShortName string `json:"sharedBucket"`
-	}{}
+	bucketSpecs := []SharedBucketSpec{}
 
 	if err := json.Unmarshal([]byte(sharedBuckets), &bucketSpecs); err != nil {
 		return err
