@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.3...v0.1.4) (2025-02-03)
+
+
+### Features
+
+* shared bucket support ([#92](https://github.com/statisticsnorway/ssbucketeer/issues/92)) ([5add2a4](https://github.com/statisticsnorway/ssbucketeer/commit/5add2a4e0355df08e8fa35311e99fcabe0a6fda7))
+
 ## [0.1.3](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.2...v0.1.3) (2025-01-24)
 
 
