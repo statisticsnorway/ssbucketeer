@@ -77,8 +77,17 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	// If the job status is `done`, we have nothing to do
+	// If the job status is `done`, we have nothing to do, should remove finalizer if set
 	if sfs.Annotations[iamProbeStatus] == iamProbeDone {
+		if controllerutil.RemoveFinalizer(&job, finalizerName) {
+			if err := r.Update(ctx, &job); err != nil {
+				if apierrors.IsConflict(err) {
+					return ctrl.Result{Requeue: true}, nil
+				}
+				log.Error(err, "failed to remove finalizer")
+				return ctrl.Result{}, err
+			}
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -152,6 +161,9 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if controllerutil.RemoveFinalizer(&job, finalizerName) {
 		if err := r.Update(ctx, &job); err != nil {
+			if apierrors.IsConflict(err) {
+				return ctrl.Result{Requeue: true}, nil
+			}
 			log.Error(err, "failed to remove finalizer")
 			return ctrl.Result{}, err
 		}
