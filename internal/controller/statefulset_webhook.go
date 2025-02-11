@@ -22,6 +22,7 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -214,6 +215,8 @@ func (m *StatefulsetMutator) launchIamProbe(ctx context.Context, sfs *appsv1.Sta
 			},
 		},
 	}
+	// Ensure Job isn't deleted before we've revived the StatefulSet
+	controllerutil.AddFinalizer(probeJob, finalizerName)
 
 	return m.Client.Create(ctx, probeJob)
 }

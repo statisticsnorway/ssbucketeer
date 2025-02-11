@@ -33,6 +33,7 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -64,8 +65,8 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, nil
 	}
 
-	// The job has not completed, and so we have nothing to do
-	if job.Status.CompletionTime.IsZero() {
+	// The job has not completed, or StatefulSet has been updated, so we have nothing to do
+	if job.Status.CompletionTime.IsZero() || !controllerutil.ContainsFinalizer(&job, finalizerName) {
 		return ctrl.Result{}, nil
 	}
 
@@ -76,13 +77,9 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	// If the job status is `done`, we want to delete this job
+	// If the job status is `done`, we have nothing to do
 	if sfs.Annotations[iamProbeStatus] == iamProbeDone {
-		err := client.IgnoreNotFound(r.Delete(ctx, &job))
-		if err != nil {
-			log.Error(err, "failed to queue job deletion")
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, nil
 	}
 
 	// Parse the IAM probe status to find the original replica count
@@ -153,9 +150,11 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	if err := r.Delete(ctx, &job); client.IgnoreNotFound(err) != nil {
-		log.Error(err, "failed to queue job deletion")
-		return ctrl.Result{}, err
+	if controllerutil.RemoveFinalizer(&job, finalizerName) {
+		if err := r.Update(ctx, &job); err != nil {
+			log.Error(err, "failed to remove finalizer")
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
