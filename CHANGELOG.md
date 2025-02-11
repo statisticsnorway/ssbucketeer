@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.5...v0.1.6) (2025-02-11)
+
+
+### Bug Fixes
+
+* requeue immediately on conflict when removing finalizer ([be3ea4f](https://github.com/statisticsnorway/ssbucketeer/commit/be3ea4f6a29322b9896c4e39a2e1815580e79bf6))
+
 ## [0.1.5](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.4...v0.1.5) (2025-02-11)
 
 
