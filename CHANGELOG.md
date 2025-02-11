@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.4...v0.1.5) (2025-02-11)
+
+
+### Bug Fixes
+
+* prevent job deletion until statefulset has been revived ([#96](https://github.com/statisticsnorway/ssbucketeer/issues/96)) ([5857bc7](https://github.com/statisticsnorway/ssbucketeer/commit/5857bc776aec5d94cf9bb5ce3b146532f766cf01))
+
 ## [0.1.4](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.3...v0.1.4) (2025-02-03)
 
 
