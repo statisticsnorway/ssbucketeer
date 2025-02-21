@@ -317,6 +317,13 @@ func (m *StatefulsetMutator) addSharedBuckets(bucketMounts map[string]string, sh
 	}
 
 	for _, bucket := range bucketSpecs {
+		bucket.Team = strings.TrimSpace(bucket.Team)
+		bucket.ShortName = strings.TrimSpace(bucket.ShortName)
+		if bucket.Team == "" || bucket.ShortName == "" {
+			// Ignore empty specs
+			continue
+		}
+
 		mountPoint := fmt.Sprintf("shared/%s/%s", bucket.Team, bucket.ShortName)
 		bucket, err := m.SharedBucketTemplate.Execute(SharedBucketTemplateData{
 			TeamName:        bucket.Team,
