@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.6...v0.1.7) (2025-02-21)
+
+
+### Bug Fixes
+
+* ignore empty shared bucket specs ([43110ed](https://github.com/statisticsnorway/ssbucketeer/commit/43110ed255df109c7b96adcc5b9929ba9f66e4f8))
+
 ## [0.1.6](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.5...v0.1.6) (2025-02-11)
 
 
