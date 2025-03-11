@@ -18,11 +18,13 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
 	"time"
 
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -136,12 +138,20 @@ func (r *ServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group string, nn types.NamespacedName) (ctrl.Result, error) {
-	log := klog.FromContext(ctx)
 	gcpSaRef := toGcpSaRef(r.DaplaGroupSaProject, group)
+	k8sSaRef := toK8sSaRef(r.ClusterProjectId, nn.Namespace, nn.Name)
+	log := klog.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
 
 	// Get the current IAM policy set on this SA
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
 	if err != nil {
+		// We don't care about NotFound errors
+		var gErr googleapi.Error
+		if errors.As(err, &gErr) && gErr.Code == http.StatusNotFound {
+			log.Info("service account no longer exists")
+			return ctrl.Result{}, nil
+		}
+
 		log.Error(err, "could not get IAM policy")
 		return ctrl.Result{}, err
 	}
@@ -171,13 +181,19 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 }
 
 func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.ServiceAccount, group string, nn types.NamespacedName) (ctrl.Result, error) {
-	log := klog.FromContext(ctx)
 	gcpSaRef := toGcpSaRef(r.DaplaGroupSaProject, group)
 	k8sSaRef := toK8sSaRef(r.ClusterProjectId, nn.Namespace, nn.Name)
+	log := klog.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
 
 	// Get the current IAM policy set on this SA
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
 	if err != nil {
+		// Ignore non-existent SAs, but log a warning
+		var gErr googleapi.Error
+		if errors.As(err, &gErr) && gErr.Code == http.StatusNotFound {
+			log.Info("cannot set IAM policy on non-existent SA")
+			return ctrl.Result{}, nil
+		}
 		log.Error(err, "could not get IAM policy")
 		return ctrl.Result{}, err
 	}
