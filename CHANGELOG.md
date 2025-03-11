@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.7...v0.1.8) (2025-03-11)
+
+
+### Bug Fixes
+
+* handle non-existent GCP SAs gracefully ([#101](https://github.com/statisticsnorway/ssbucketeer/issues/101)) ([83153de](https://github.com/statisticsnorway/ssbucketeer/commit/83153de97089dc92c00a189df8d3e089677edf00))
+
 ## [0.1.7](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.6...v0.1.7) (2025-02-21)
 
 
