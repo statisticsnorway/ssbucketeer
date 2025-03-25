@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.8...v0.1.9) (2025-03-24)
+
+
+### Bug Fixes
+
+* Dockerfile.iam-probe to reduce vulnerabilities ([#99](https://github.com/statisticsnorway/ssbucketeer/issues/99)) ([db47840](https://github.com/statisticsnorway/ssbucketeer/commit/db4784017f8527272d6f4e3d76dfcc35d96982b9))
+
 ## [0.1.8](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.7...v0.1.8) (2025-03-11)
 
 
