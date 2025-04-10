@@ -146,7 +146,7 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
 	if err != nil {
 		// We don't care about NotFound errors
-		var gErr googleapi.Error
+		var gErr *googleapi.Error
 		if errors.As(err, &gErr) && gErr.Code == http.StatusNotFound {
 			log.Info("service account no longer exists")
 			return ctrl.Result{}, nil
@@ -189,7 +189,7 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.S
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
 	if err != nil {
 		// Ignore non-existent SAs, but log a warning
-		var gErr googleapi.Error
+		var gErr *googleapi.Error
 		if errors.As(err, &gErr) && gErr.Code == http.StatusNotFound {
 			log.Info("cannot set IAM policy on non-existent SA")
 			return ctrl.Result{}, nil
