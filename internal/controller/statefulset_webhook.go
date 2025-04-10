@@ -137,7 +137,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			return admission.Denied("invalid requested duration format")
 		}
 
-		accessExpired = sfs.CreationTimestamp.Add(parsedDuration).After(time.Now())
+		accessExpired = time.Now().After(sfs.CreationTimestamp.Add(parsedDuration))
 	}
 
 	if accessExpired {
