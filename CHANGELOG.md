@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.9...v0.1.10) (2025-04-11)
+
+
+### Bug Fixes
+
+* remove volumes and mounts if access has expired ([#107](https://github.com/statisticsnorway/ssbucketeer/issues/107)) ([537d5a8](https://github.com/statisticsnorway/ssbucketeer/commit/537d5a8788e155bc4ba2a840f0c919423458ae88))
+
 ## [0.1.9](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.8...v0.1.9) (2025-03-24)
 
 
