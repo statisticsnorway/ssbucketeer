@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	rm "cloud.google.com/go/resourcemanager/apiv3"
 	rmpb "cloud.google.com/go/resourcemanager/apiv3/resourcemanagerpb"
@@ -93,8 +94,6 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	bucketMounts := getExtraBucketMounts(sfs.Annotations)
-
 	saAnnotations := map[string]string{
 		impersonateGroupAnnotation: group,
 		accessReasonAnnotation:     sfs.Annotations[accessReasonAnnotation],
@@ -130,20 +129,37 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 	}
 
-	if sharedBuckets, ok := sfs.Annotations[mountSharedBucketsAnnotation]; ok {
-		if err := m.addSharedBuckets(bucketMounts, sharedBuckets); err != nil {
-			log.Error(err, "failed to add shared buckets")
+	accessExpired := false
+	if groupConfig.ReasonRequired {
+		parsedDuration, err := time.ParseDuration(sfs.Annotations[requestedServiceDurationAnnotation])
+		if err != nil {
+			log.Error(err, "failed to parse requested duration", "durationAnnotation", sfs.Annotations[requestedServiceDurationAnnotation])
+			return admission.Denied("invalid requested duration format")
 		}
+
+		accessExpired = time.Now().After(sfs.CreationTimestamp.Add(parsedDuration))
 	}
 
-	// TODO: Use Dapla Team API for this?
-	if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
-		if err := m.addStandardBuckets(ctx, team, *groupConfig, bucketMounts); err != nil {
-			log.Error(err, "failed to add standard buckets")
-		}
-	}
+	if accessExpired {
+		removeBucketsFromPodSpec(&sfs.Spec.Template.Spec, serviceContainer)
+	} else {
+		bucketMounts := getExtraBucketMounts(sfs.Annotations)
 
-	addBucketsToPodSpec(&sfs.Spec.Template.Spec, serviceContainer, bucketMounts, m.PrecreatorImage)
+		if sharedBuckets, ok := sfs.Annotations[mountSharedBucketsAnnotation]; ok {
+			if err := m.addSharedBuckets(bucketMounts, sharedBuckets); err != nil {
+				log.Error(err, "failed to add shared buckets")
+			}
+		}
+
+		// TODO: Use Dapla Team API for this?
+		if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
+			if err := m.addStandardBuckets(ctx, team, *groupConfig, bucketMounts); err != nil {
+				log.Error(err, "failed to add standard buckets")
+			}
+		}
+
+		addBucketsToPodSpec(&sfs.Spec.Template.Spec, serviceContainer, bucketMounts, m.PrecreatorImage)
+	}
 
 	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
 		if err := m.launchIamProbe(ctx, sfs); err != nil {

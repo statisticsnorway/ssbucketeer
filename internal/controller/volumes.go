@@ -9,6 +9,10 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+const (
+	precreatorContainerName = "bucket-folders-precreator"
+)
+
 func volumeNameIs(name string) func(v corev1.Volume) bool {
 	return func(v corev1.Volume) bool {
 		return v.Name == name
@@ -66,7 +70,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 	if modified {
 		precreator := corev1.Container{
 			Image: precreatorImage,
-			Name:  "bucket-folders-precreator",
+			Name:  precreatorContainerName,
 		}
 		for mountPoint, bucket := range bucketMounts {
 			volumeName := fmt.Sprintf("gcsfuse-%s", strings.ReplaceAll(mountPoint, "/", "--"))
@@ -81,6 +85,36 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 			podspec.Containers = append(podspec.Containers, precreator)
 		}
 	}
+
+	return modified
+}
+
+func removeBucketsFromPodSpec(podspec *corev1.PodSpec, container *corev1.Container) (shouldUpdate bool) {
+	modified := false
+
+	podspec.Volumes = slices.DeleteFunc(podspec.Volumes, func(v corev1.Volume) bool {
+		if strings.HasPrefix(v.Name, "gcsfuse-") {
+			modified = true
+			return true
+		}
+		return false
+	})
+
+	container.VolumeMounts = slices.DeleteFunc(container.VolumeMounts, func(m corev1.VolumeMount) bool {
+		if strings.HasPrefix(m.Name, "gcsfuse-") {
+			modified = true
+			return true
+		}
+		return false
+	})
+
+	podspec.Containers = slices.DeleteFunc(podspec.Containers, func(c corev1.Container) bool {
+		if c.Name == precreatorContainerName {
+			modified = true
+			return true
+		}
+		return false
+	})
 
 	return modified
 }

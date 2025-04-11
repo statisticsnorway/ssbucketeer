@@ -7,6 +7,7 @@ require (
 	cloud.google.com/go/resourcemanager v1.10.5
 	cloud.google.com/go/storage v1.51.0
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/go-test/deep v1.1.1
 	github.com/onsi/ginkgo/v2 v2.23.3
 	github.com/onsi/gomega v1.36.3
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
