@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.10...v0.1.11) (2025-04-15)
+
+
+### Bug Fixes
+
+* don't mount the team's own delomat buckets ([3a0bf12](https://github.com/statisticsnorway/ssbucketeer/commit/3a0bf12272bbeed007156c024ba4d2e1d2adf704))
+
 ## [0.1.10](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.9...v0.1.10) (2025-04-11)
 
 
