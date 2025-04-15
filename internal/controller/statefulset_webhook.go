@@ -319,6 +319,9 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 			strings.TrimPrefix(bucket.Name, bucketPrefix),
 			fmt.Sprintf("-%s", m.Stage),
 		)
+		if strings.HasPrefix(withoutPrefix, "delt-delomat-") {
+			continue
+		}
 		bucketMounts[withoutPrefix] = bucket.Name
 	}
 
@@ -359,9 +362,7 @@ func ensurePodAnnotations(podTemplate *corev1.PodTemplateSpec) {
 		podTemplate.Annotations = make(map[string]string, 2)
 	}
 
-	if podTemplate.Annotations["gke-gcsfuse/volumes"] != "true" {
-		podTemplate.Annotations["gke-gcsfuse/volumes"] = "true"
-	}
+	podTemplate.Annotations["gke-gcsfuse/volumes"] = "true"
 
 	// Add necessary istio outbound IP exclusion if missing
 	excludeOutboundIpRangesValue, ok := podTemplate.Annotations[istioExcludedIpRangesAnnotation]
