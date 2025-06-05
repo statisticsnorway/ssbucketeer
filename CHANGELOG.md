@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.11...v0.1.12) (2025-06-05)
+
+
+### Bug Fixes
+
+* make volume names max 54 chars long ([#111](https://github.com/statisticsnorway/ssbucketeer/issues/111)) ([5c75025](https://github.com/statisticsnorway/ssbucketeer/commit/5c750258584cc98686f6534b9a658697cad992be))
+
 ## [0.1.11](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.10...v0.1.11) (2025-04-15)
 
 
