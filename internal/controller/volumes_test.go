@@ -185,3 +185,42 @@ func TestRemoveBucketsFromPodSpec(t *testing.T) {
 	}
 
 }
+
+func TestMaxLengthVolumeName(t *testing.T) {
+	type TestCase struct {
+		Description        string
+		MountPoint         string
+		ExpectedLength     int
+		ExpectedVolumeName string
+	}
+	tests := []TestCase{
+		{
+			Description:        "Mountpoint shorter than maxLength",
+			MountPoint:         "short/team/bucket",
+			ExpectedLength:     27,
+			ExpectedVolumeName: "gcsfuse-short--team--bucket",
+		},
+		{
+			Description:        "Mountpoint exact maxLength",
+			MountPoint:         "exact/team/bucket-scpaxhfblvomjeoixplhtvktqm",
+			ExpectedLength:     54,
+			ExpectedVolumeName: "gcsfuse-exact--team--bucket-scpaxhfblvomjeoixplhtvktqm",
+		},
+		{
+			Description:        "Mountpoint longer maxLength",
+			MountPoint:         "longer/team/bucket-ayjtigfrcojhjkxgyjateuqddmguse",
+			ExpectedLength:     54,
+			ExpectedVolumeName: "gcsfuse-longer--team--bucket-ayjtigfrcojhjkxg-01f50b1b",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Description, func(t *testing.T) {
+			if res := maxLengthVolumeName(tt.MountPoint); len(res) != tt.ExpectedLength {
+				t.Errorf("length=%v, expected=%v", len(res), tt.ExpectedLength)
+			}
+			if res := maxLengthVolumeName(tt.MountPoint); res != tt.ExpectedVolumeName {
+				t.Errorf("maxLengthVolumeName=%v, expected=%v", res, tt.ExpectedVolumeName)
+			}
+		})
+	}
+}

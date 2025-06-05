@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"crypto/md5"
 	"fmt"
 	"slices"
 	"strings"
@@ -25,11 +26,23 @@ func volumeMountNameIs(name string) func(v corev1.VolumeMount) bool {
 	}
 }
 
+func maxLengthVolumeName(mountPoint string) string {
+	const maxLength = 54
+	const hashLength = 8
+	volumeName := fmt.Sprintf("gcsfuse-%s", strings.ReplaceAll(mountPoint, "/", "--"))
+	if len(volumeName) > maxLength {
+		hash := fmt.Sprintf("%x", md5.Sum([]byte(volumeName)))
+		volumeNameHash := fmt.Sprintf("%s-%s", volumeName[:maxLength-hashLength-1], hash[:hashLength])
+		return volumeNameHash
+	}
+	return volumeName
+}
+
 func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, bucketMounts map[string]string, precreatorImage string) (shouldUpdate bool) {
 	volumes := make([]corev1.Volume, 0, len(bucketMounts))
 	volumeMounts := make([]corev1.VolumeMount, 0, len(bucketMounts))
 	for mountPoint, bucket := range bucketMounts {
-		volumeName := fmt.Sprintf("gcsfuse-%s", strings.ReplaceAll(mountPoint, "/", "--"))
+		volumeName := maxLengthVolumeName(mountPoint)
 
 		// TODO: Test whether the group has read/write access
 		if !slices.ContainsFunc(podspec.Volumes, volumeNameIs(volumeName)) {
@@ -73,7 +86,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 			Name:  precreatorContainerName,
 		}
 		for mountPoint, bucket := range bucketMounts {
-			volumeName := fmt.Sprintf("gcsfuse-%s", strings.ReplaceAll(mountPoint, "/", "--"))
+			volumeName := maxLengthVolumeName(mountPoint)
 			precreator.VolumeMounts = append(precreator.VolumeMounts, corev1.VolumeMount{
 				Name:      volumeName,
 				MountPath: fmt.Sprintf("/buckets/%s", bucket),
