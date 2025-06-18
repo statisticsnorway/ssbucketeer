@@ -15,7 +15,7 @@ on:
       - ".github/workflows/build-iam-probe.yml"
 
 env:
-  REGISTRY: europe-west4-docker.pkg.dev/artifact-registry-5n/dapla-lab-docker/dapla
+  REGISTRY: europe-north1-docker.pkg.dev/artifact-registry-5n/dapla-lab-docker/dapla
   IMAGE: ssbucketeer-iam-probe
   TAG: ${{ github.ref_name }}-${{ github.sha }}
 
