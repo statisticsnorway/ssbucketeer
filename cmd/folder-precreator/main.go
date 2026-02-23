@@ -29,10 +29,10 @@ func main() {
 	// Errors from this function aren't necessarily catastrophic..
 	// Some folders in GCS might share a name with a file in the same
 	// folder, as blob storage does not really have folders..
-	err = pc.PopulateAllBucketFolders(ctx, "/buckets")
-	if err != nil {
-		log.Printf("populate bucket folders: %v", err)
-	}
+	//err = pc.PopulateAllBucketFolders(ctx, "/buckets")
+	//if err != nil {
+	//	log.Printf("populate bucket folders: %v", err)
+	//}
 
 	var mu sync.Mutex
 	http.HandleFunc("/refresh-folders", func(w http.ResponseWriter, r *http.Request) {
