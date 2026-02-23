@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.14](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.13...v0.1.14) (2026-02-23)
+
+
+### Bug Fixes
+
+* actually modify precreator container ([829e60a](https://github.com/statisticsnorway/ssbucketeer/commit/829e60ab1b7124ed49a2b2a814d6482f7cef29bb))
+
 ## [0.1.13](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.12...v0.1.13) (2026-02-23)
 
 
