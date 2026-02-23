@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.13](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.12...v0.1.13) (2026-02-23)
+
+
+### Bug Fixes
+
+* always update precreator image if changed ([#122](https://github.com/statisticsnorway/ssbucketeer/issues/122)) ([0a66b0c](https://github.com/statisticsnorway/ssbucketeer/commit/0a66b0c1d21c4f685610fc75d0626f621ed5d43d))
+
 ## [0.1.12](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.11...v0.1.12) (2025-06-05)
 
 
