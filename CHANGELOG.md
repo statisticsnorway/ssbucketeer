@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.15](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.14...v0.1.15) (2026-02-23)
+
+
+### Bug Fixes
+
+* use correct incorrect way of doing volume names ([96531f3](https://github.com/statisticsnorway/ssbucketeer/commit/96531f3254410f44bdf77061a96511e6ff1ec466))
+
 ## [0.1.14](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.13...v0.1.14) (2026-02-23)
 
 
