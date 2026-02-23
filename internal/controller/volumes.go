@@ -78,28 +78,43 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 		container.VolumeMounts = append(container.VolumeMounts, volumeMounts...)
 	}
 
-	modified := len(volumes) > 0 || len(volumeMounts) > 0
+	precreatorModified := addOrUpdatePrecreator(podspec, bucketMounts, precreatorImage)
 
-	if modified {
-		precreator := corev1.Container{
-			Image: precreatorImage,
-			Name:  precreatorContainerName,
+	return precreatorModified || len(volumes) > 0 || len(volumeMounts) > 0
+}
+
+func addOrUpdatePrecreator(podspec *corev1.PodSpec, bucketMounts map[string]string, precreatorImage string) (modified bool) {
+	precreator := corev1.Container{
+		Image: precreatorImage,
+		Name:  precreatorContainerName,
+	}
+	volumeMounts := make(map[string]corev1.VolumeMount, len(bucketMounts))
+	for _, bucket := range bucketMounts {
+		volumeName := maxLengthVolumeName(bucket)
+		volumeMounts[volumeName] = corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: fmt.Sprintf("/buckets/%s", bucket),
 		}
-		for mountPoint, bucket := range bucketMounts {
-			volumeName := maxLengthVolumeName(mountPoint)
-			precreator.VolumeMounts = append(precreator.VolumeMounts, corev1.VolumeMount{
-				Name:      volumeName,
-				MountPath: fmt.Sprintf("/buckets/%s", bucket),
-			})
-		}
-		if !slices.ContainsFunc(podspec.Containers, func(c corev1.Container) bool {
-			return c.Name == precreator.Name
-		}) {
-			podspec.Containers = append(podspec.Containers, precreator)
+	}
+	for _, mount := range volumeMounts {
+		precreator.VolumeMounts = append(precreator.VolumeMounts, mount)
+	}
+	for _, c := range podspec.Containers {
+		if c.Name == precreator.Name {
+			if c.Image != precreatorImage ||
+				!slices.EqualFunc(precreator.VolumeMounts, c.VolumeMounts, func(a, b corev1.VolumeMount) bool {
+					return a.Name == b.Name
+				}) {
+				c.Image = precreatorImage
+				c.VolumeMounts = precreator.VolumeMounts
+				return true
+			}
+			return false
 		}
 	}
 
-	return modified
+	podspec.Containers = append(podspec.Containers, precreator)
+	return true
 }
 
 func removeBucketsFromPodSpec(podspec *corev1.PodSpec, container *corev1.Container) (shouldUpdate bool) {
