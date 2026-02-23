@@ -89,8 +89,8 @@ func addOrUpdatePrecreator(podspec *corev1.PodSpec, bucketMounts map[string]stri
 		Name:  precreatorContainerName,
 	}
 	volumeMounts := make(map[string]corev1.VolumeMount, len(bucketMounts))
-	for _, bucket := range bucketMounts {
-		volumeName := maxLengthVolumeName(bucket)
+	for mountPoint, bucket := range bucketMounts {
+		volumeName := maxLengthVolumeName(mountPoint)
 		volumeMounts[volumeName] = corev1.VolumeMount{
 			Name:      volumeName,
 			MountPath: fmt.Sprintf("/buckets/%s", bucket),
