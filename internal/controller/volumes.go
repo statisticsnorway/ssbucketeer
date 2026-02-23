@@ -99,14 +99,13 @@ func addOrUpdatePrecreator(podspec *corev1.PodSpec, bucketMounts map[string]stri
 	for _, mount := range volumeMounts {
 		precreator.VolumeMounts = append(precreator.VolumeMounts, mount)
 	}
-	for _, c := range podspec.Containers {
+	for i, c := range podspec.Containers {
 		if c.Name == precreator.Name {
 			if c.Image != precreatorImage ||
 				!slices.EqualFunc(precreator.VolumeMounts, c.VolumeMounts, func(a, b corev1.VolumeMount) bool {
 					return a.Name == b.Name
 				}) {
-				c.Image = precreatorImage
-				c.VolumeMounts = precreator.VolumeMounts
+				podspec.Containers[i] = precreator
 				return true
 			}
 			return false
