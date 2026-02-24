@@ -73,6 +73,15 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	// Get the StatefulSet the IAM probe job was spawned for
 	var sfs appsv1.StatefulSet
 	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: sfsName}, &sfs); err != nil {
+		if apierrors.IsNotFound(err) {
+			if err := r.Delete(ctx, &job); err != nil {
+				if apierrors.IsNotFound(err) {
+					return ctrl.Result{}, nil
+				}
+				log.Error(err, "could not delete Job for non-existent StatefulSet")
+				return ctrl.Result{}, err
+			}
+		}
 		log.Error(err, "could not get StatefulSet")
 		return ctrl.Result{}, err
 	}
