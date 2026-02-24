@@ -56,7 +56,7 @@ type config struct {
 	TeamsFolderNumber     string                          `env:"TEAMS_FOLDER_NUMBER,required,notEmpty"`
 	Stage                 string                          `env:"STAGE,required,notEmpty"`
 	IamProbeImage         string                          `env:"IAM_PROBE_IMAGE"`
-	PrecreatorImage       string                          `env:"PRECREATOR_IMAGE"`
+	PrecreatorImage       *string                         `env:"PRECREATOR_IMAGE"`
 	ADCGroupEnvName       string                          `env:"ADC_GROUP_ENV_NAME"`
 	GroupConfigs          []controller.AccessGroupConfig  `env:"GROUP_CONFIG,required,notEmpty"`
 	AuditSinks            []auditSink                     `env:"AUDIT_SINKS"`

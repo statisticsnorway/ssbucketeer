@@ -38,7 +38,7 @@ func maxLengthVolumeName(mountPoint string) string {
 	return volumeName
 }
 
-func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, bucketMounts map[string]string, precreatorImage string) (shouldUpdate bool) {
+func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, bucketMounts map[string]string) (shouldUpdate bool) {
 	volumes := make([]corev1.Volume, 0, len(bucketMounts))
 	volumeMounts := make([]corev1.VolumeMount, 0, len(bucketMounts))
 	for mountPoint, bucket := range bucketMounts {
@@ -78,42 +78,7 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 		container.VolumeMounts = append(container.VolumeMounts, volumeMounts...)
 	}
 
-	precreatorModified := addOrUpdatePrecreator(podspec, bucketMounts, precreatorImage)
-
-	return precreatorModified || len(volumes) > 0 || len(volumeMounts) > 0
-}
-
-func addOrUpdatePrecreator(podspec *corev1.PodSpec, bucketMounts map[string]string, precreatorImage string) (modified bool) {
-	precreator := corev1.Container{
-		Image: precreatorImage,
-		Name:  precreatorContainerName,
-	}
-	volumeMounts := make(map[string]corev1.VolumeMount, len(bucketMounts))
-	for mountPoint, bucket := range bucketMounts {
-		volumeName := maxLengthVolumeName(mountPoint)
-		volumeMounts[volumeName] = corev1.VolumeMount{
-			Name:      volumeName,
-			MountPath: fmt.Sprintf("/buckets/%s", bucket),
-		}
-	}
-	for _, mount := range volumeMounts {
-		precreator.VolumeMounts = append(precreator.VolumeMounts, mount)
-	}
-	for i, c := range podspec.Containers {
-		if c.Name == precreator.Name {
-			if c.Image != precreatorImage ||
-				!slices.EqualFunc(precreator.VolumeMounts, c.VolumeMounts, func(a, b corev1.VolumeMount) bool {
-					return a.Name == b.Name
-				}) {
-				podspec.Containers[i] = precreator
-				return true
-			}
-			return false
-		}
-	}
-
-	podspec.Containers = append(podspec.Containers, precreator)
-	return true
+	return len(volumes) > 0 || len(volumeMounts) > 0
 }
 
 func removeBucketsFromPodSpec(podspec *corev1.PodSpec, container *corev1.Container) (shouldUpdate bool) {

@@ -50,7 +50,7 @@ type StatefulsetMutator struct {
 	TeamsFolderNumber string
 	Stage             string
 	IamProbeImage     string
-	PrecreatorImage   string
+	PrecreatorImage   *string
 	ADCGroupEnvName   string
 
 	GroupConfigs AccessGroupConfigs
@@ -142,6 +142,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	if accessExpired {
 		removeBucketsFromPodSpec(&sfs.Spec.Template.Spec, serviceContainer)
+		removePrecreator(&sfs.Spec.Template.Spec)
 	} else {
 		bucketMounts := getExtraBucketMounts(sfs.Annotations)
 
@@ -158,7 +159,12 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 			}
 		}
 
-		addBucketsToPodSpec(&sfs.Spec.Template.Spec, serviceContainer, bucketMounts, m.PrecreatorImage)
+		addBucketsToPodSpec(&sfs.Spec.Template.Spec, serviceContainer, bucketMounts)
+		if m.PrecreatorImage != nil {
+			addOrUpdatePrecreator(&sfs.Spec.Template.Spec, bucketMounts, *m.PrecreatorImage)
+		} else {
+			removePrecreator(&sfs.Spec.Template.Spec)
+		}
 	}
 
 	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
