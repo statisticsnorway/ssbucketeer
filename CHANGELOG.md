@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.16](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.15...v0.1.16) (2026-02-24)
+
+
+### Features
+
+* option to turn off precreator by not setting image ([#126](https://github.com/statisticsnorway/ssbucketeer/issues/126)) ([afb899c](https://github.com/statisticsnorway/ssbucketeer/commit/afb899c3cee458c0f288b0fa589d4ea823a698d0))
+
 ## [0.1.15](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.14...v0.1.15) (2026-02-23)
 
 
