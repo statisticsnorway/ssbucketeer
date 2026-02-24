@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.16...v0.1.17) (2026-02-24)
+
+
+### Features
+
+* **iam-probe:** try quitquitquit until it succeeds ([f27441d](https://github.com/statisticsnorway/ssbucketeer/commit/f27441d3e86eec4b995f08219d22f54b43f577c3))
+
 ## [0.1.16](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.15...v0.1.16) (2026-02-24)
 
 
