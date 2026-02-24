@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.19](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.18...v0.1.19) (2026-02-24)
+
+
+### Bug Fixes
+
+* actually ignore sfs notfound ([48759f7](https://github.com/statisticsnorway/ssbucketeer/commit/48759f75ac59aad24d0b5261d5b5812e9cc5b70c))
+
 ## [0.1.18](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.17...v0.1.18) (2026-02-24)
 
 
