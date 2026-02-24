@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.18](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.17...v0.1.18) (2026-02-24)
+
+
+### Bug Fixes
+
+* delete job if statefulset can't be found ([bf3e21a](https://github.com/statisticsnorway/ssbucketeer/commit/bf3e21a5474ad78b727a0b2f95bea5621657eb2c))
+
 ## [0.1.17](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.16...v0.1.17) (2026-02-24)
 
 
