@@ -81,6 +81,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 				log.Error(err, "could not delete Job for non-existent StatefulSet")
 				return ctrl.Result{}, err
 			}
+			return ctrl.Result{}, nil
 		}
 		log.Error(err, "could not get StatefulSet")
 		return ctrl.Result{}, err
