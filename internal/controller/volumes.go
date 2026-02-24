@@ -100,13 +100,5 @@ func removeBucketsFromPodSpec(podspec *corev1.PodSpec, container *corev1.Contain
 		return false
 	})
 
-	podspec.Containers = slices.DeleteFunc(podspec.Containers, func(c corev1.Container) bool {
-		if c.Name == precreatorContainerName {
-			modified = true
-			return true
-		}
-		return false
-	})
-
 	return modified
 }
