@@ -3,9 +3,6 @@ A CRD-less, annotation-based controller which mutates StatefulSets and
 ServiceAccounts so Google Cloud Storage buckets are mounted in the app using
 gcsfuse.
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
-
 ## Getting Started
 
 ### Prerequisites
@@ -79,25 +76,38 @@ Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project
 kubectl apply -f https://raw.githubusercontent.com/<org>/ssbucketeer/<tag or branch>/dist/install.yaml
 ```
 
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+# Contributing
 
-**NOTE:** Run `make help` for more information on all potential `make` targets
+Please follow these guidelines when contributing.
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+## Commit messages and merging PRs
 
-## License
+Use squash merges, not merge commits.
+This allows the release-please workflow to parse them and create a changelog.
 
-Copyright 2024.
+This project follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for its commit messages - **this also applies to squash merge messages**.
+You can check out the following resources for more explanation/motivation:
+[The power of conventional commits](https://julien.ponge.org/blog/the-power-of-conventional-commits/)
+ and
+[Conventional Commit Messages](https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13).
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+When working on experimental branches you can use whatever commit messages you want, but you should either squash/amend your messages before merging your PR.
+Using [Scratchpad branches](https://julien.ponge.org/blog/a-workflow-for-experiments-in-git-scratchpad-branches/) is probably the easiest approach.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+Use the provided pre-commit hook to verify your commit messages:
+```sh
+pre-commit install --install-hooks
+pre-commit install -t commit-msg
+```
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+## Creating a release
+
+Google's [release-please](https://github.com/googleapis/release-please) is used to create releases.
+release-please maintains a release PR, which determines the next semver version based on whether there have been feature additions, breaking changes, etc.
+To create a release, simply merge that PR, and it will create a GitHub release, tag and a Docker image will be built.
+
+The suggested next version can be overriden by including `Release-As: x.x.x` in a commit message. For example:
+
+```sh
+git commit --allow-empty -m "chore: release 2.0.0" -m "Release-As: 2.0.0"
+```
