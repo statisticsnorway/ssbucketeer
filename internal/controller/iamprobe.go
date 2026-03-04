@@ -10,7 +10,10 @@ func addOrUpdateIamProbe(podspec *corev1.PodSpec, iamProbeImage string) (modifie
 	for i, c := range podspec.InitContainers {
 		if c.Name == iamProbeContainerName {
 			if c.Image != iamProbeImage {
-				podspec.Containers[i].Image = iamProbeImage
+				podspec.InitContainers[i].Image = iamProbeImage
+				if i != 0 {
+					podspec.InitContainers[0], podspec.InitContainers[i] = podspec.InitContainers[i], podspec.InitContainers[0]
+				}
 				return true
 			}
 			return false
