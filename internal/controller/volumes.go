@@ -10,10 +10,6 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-const (
-	precreatorContainerName = "bucket-folders-precreator"
-)
-
 func volumeNameIs(name string) func(v corev1.Volume) bool {
 	return func(v corev1.Volume) bool {
 		return v.Name == name
