@@ -16,14 +16,10 @@ import (
 	"github.com/statisticsnorway/ssbucketeer/internal/template"
 	"google.golang.org/api/iterator"
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -167,10 +163,10 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 	}
 
-	if m.IamProbeImage != "" && sfs.Annotations[iamProbeStatus] != iamProbeDone {
-		if err := m.launchIamProbe(ctx, sfs); err != nil {
-			log.Error(err, "could not start iam probe")
-		}
+	if m.IamProbeImage != "" && !accessExpired {
+		addOrUpdateIamProbe(&sfs.Spec.Template.Spec, m.IamProbeImage)
+	} else {
+		removeIamProbe(&sfs.Spec.Template.Spec)
 	}
 
 	marshaledStatefulSet, err := json.Marshal(sfs)
@@ -201,46 +197,6 @@ func getServiceContainer(pod *corev1.PodTemplateSpec, name string) *corev1.Conta
 		return nil
 	}
 	return &pod.Spec.Containers[idx]
-}
-
-func (m *StatefulsetMutator) launchIamProbe(ctx context.Context, sfs *appsv1.StatefulSet) error {
-	sfs.Annotations[iamProbeStatus] = fmt.Sprintf("%s%d", iamProbeRunningPrefix, *sfs.Spec.Replicas)
-	sfs.Spec.Replicas = ptr.To[int32](0)
-
-	probeJob := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
-			Namespace: sfs.Namespace,
-			Annotations: map[string]string{
-				probeJobStatefulsetAnnotation: sfs.Name,
-			},
-		},
-		Spec: batchv1.JobSpec{
-			ActiveDeadlineSeconds:   ptr.To[int64](300),
-			TTLSecondsAfterFinished: ptr.To[int32](0),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						istioExcludedIpRangesAnnotation: gcsfuseOutboundIPRange,
-					},
-				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName: sfs.Spec.Template.Spec.ServiceAccountName,
-					Containers: []corev1.Container{
-						{
-							Image: m.IamProbeImage,
-							Name:  "iam-probe",
-						},
-					},
-					RestartPolicy: corev1.RestartPolicyNever,
-				},
-			},
-		},
-	}
-	// Ensure Job isn't deleted before we've revived the StatefulSet
-	controllerutil.AddFinalizer(probeJob, finalizerName)
-
-	return m.Client.Create(ctx, probeJob)
 }
 
 func (a *StatefulsetMutator) handleServiceAccount(ctx context.Context, namespace, name string, saAnnotations map[string]string) error {

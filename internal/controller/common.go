@@ -17,11 +17,6 @@ const (
 	requestedServiceDurationAnnotation = "dapla.ssb.no/requested-service-duration"
 	accessReasonAnnotation             = "dapla.ssb.no/access-reason"
 
-	probeJobStatefulsetAnnotation = "dapla.ssb.no/statefulset-probe-name"
-	iamProbeStatus                = "dapla.ssb.no/iam-probe-completed"
-	iamProbeRunningPrefix         = "running-replicas-"
-	iamProbeDone                  = "done"
-
 	daplaTeamLabel  = "dapla.ssb.no/team"
 	daplaGroupLabel = "dapla.ssb.no/group"
 
@@ -37,6 +32,9 @@ const (
 	userNamespacePrefix = "user-ssb-"
 
 	iamConditionKey = "ssbucketeer.namespacedName"
+
+	precreatorContainerName = "bucket-folders-precreator"
+	iamProbeContainerName   = "ssbucketeer-iam-probe"
 )
 
 var (
