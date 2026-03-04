@@ -23,14 +23,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=core,resources=pods/finalizers,verbs=update
 
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=create;get;list;watch;update;patch
 
-//+kubebuilder:webhook:path=/mutate-apps-v1-statefulset,mutating=true,failurePolicy=fail,groups=apps,resources=statefulsets,verbs=create;update,versions=v1,name=mstatefulset.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-core-v1-pod,mutating=true,failurePolicy=fail,groups=core,resources=pods,verbs=create;update,versions=v1,name=mpod.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
 
 var _ admission.Handler = (*PodMutator)(nil)
 
