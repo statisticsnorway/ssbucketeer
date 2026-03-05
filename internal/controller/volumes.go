@@ -49,9 +49,10 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 						Driver:   "gcsfuse.csi.storage.gke.io",
 						ReadOnly: ptr.To(false),
 						VolumeAttributes: map[string]string{
-							"bucketName":             bucket,
-							"mountOptions":           "uid=1000,gid=100",
-							"gcsfuseLoggingSeverity": "warning",
+							"bucketName":               bucket,
+							"mountOptions":             "uid=1000,gid=100",
+							"gcsfuseLoggingSeverity":   "warning",
+							"skipCSIBucketAccessCheck": "true",
 						},
 					},
 				},
