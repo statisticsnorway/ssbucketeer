@@ -163,11 +163,11 @@ func (m *PodMutator) Handle(ctx context.Context, req admission.Request) admissio
 		removeIamProbe(&pod.Spec)
 	}
 
-	marshaledStatefulSet, err := json.Marshal(pod)
+	marshaledPod, err := json.Marshal(pod)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledStatefulSet)
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
 }
 
 func getExtraBucketMounts(annotations map[string]string) map[string]string {
