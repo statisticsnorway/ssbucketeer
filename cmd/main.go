@@ -229,18 +229,9 @@ func main() {
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		(&controller.StatefulsetMutator{
-			Client:               mgr.GetClient(),
-			Decoder:              admission.NewDecoder(mgr.GetScheme()),
-			Storage:              storageClient,
-			Projects:             projectsClient,
-			Folders:              foldersClient,
-			TeamsFolderNumber:    cfg.TeamsFolderNumber,
-			Stage:                cfg.Stage,
-			IamProbeImage:        cfg.IamProbeImage,
-			PrecreatorImage:      cfg.PrecreatorImage,
-			ADCGroupEnvName:      cfg.ADCGroupEnvName,
-			GroupConfigs:         cfg.GroupConfigs,
-			SharedBucketTemplate: cfg.SharedBucketTemplate,
+			Client:       mgr.GetClient(),
+			Decoder:      admission.NewDecoder(mgr.GetScheme()),
+			GroupConfigs: cfg.GroupConfigs,
 		}).SetupWithManager(mgr)
 
 		(&controller.PodMutator{

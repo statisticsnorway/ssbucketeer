@@ -9,9 +9,6 @@ import (
 	"strings"
 	"time"
 
-	rm "cloud.google.com/go/resourcemanager/apiv3"
-	"cloud.google.com/go/storage"
-	"github.com/statisticsnorway/ssbucketeer/internal/template"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,19 +33,7 @@ type StatefulsetMutator struct {
 	Client  client.Client
 	Decoder admission.Decoder
 
-	Storage  *storage.Client
-	Projects *rm.ProjectsClient
-	Folders  *rm.FoldersClient
-
-	TeamsFolderNumber string
-	Stage             string
-	IamProbeImage     string
-	PrecreatorImage   *string
-	ADCGroupEnvName   string
-
 	GroupConfigs AccessGroupConfigs
-
-	SharedBucketTemplate template.AnonymousTemplate[SharedBucketTemplateData]
 }
 
 type SharedBucketSpec struct {
