@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.21](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.20...v0.1.21) (2026-03-09)
+
+
+### Bug Fixes
+
+* limit webhooks to onxyia user namespaces ([#140](https://github.com/statisticsnorway/ssbucketeer/issues/140)) ([f9f0b39](https://github.com/statisticsnorway/ssbucketeer/commit/f9f0b39baff0992e6c4c3e3bd601be19fda71867))
+
 ## [0.1.20](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.19...v0.1.20) (2026-03-09)
 
 
