@@ -1,0 +1,6 @@
+- op: add
+  path: /webhooks/0/namespaceSelector
+  value:
+    matchExpressions:
+      - key: ssbucketeer-webhook-excluded
+        operator: DoesNotExist
