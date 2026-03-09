@@ -1,0 +1,12 @@
+- op: add
+  path: /webhooks/0/namespaceSelector
+  value:
+    matchExpressions:
+      - key: onyxia_owner
+        operator: Exists
+- op: add
+  path: /webhooks/1/namespaceSelector
+  value:
+    matchExpressions:
+      - key: onyxia_owner
+        operator: Exists

@@ -6,15 +6,15 @@ configurations:
   - kustomizeconfig.yaml
 
 patches:
-  - path: namespaceselector_patch.yaml
+  - path: mutating_namespaceselector_patch.yaml
     target:
       group: admissionregistration.k8s.io
       version: v1
       kind: MutatingWebhookConfiguration
       name: mutating-webhook-configuration
-  - path: namespaceselector_patch.yaml
+  - path: validating_namespaceselector_patch.yaml
     target:
       group: admissionregistration.k8s.io
       version: v1
       kind: ValidatingWebhookConfiguration
-      name: mutating-webhook-configuration
+      name: validating-webhook-configuration
