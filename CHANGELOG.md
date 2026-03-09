@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.20](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.19...v0.1.20) (2026-03-09)
+
+
+### Bug Fixes
+
+* update kube-rbac-proxt image location ([#138](https://github.com/statisticsnorway/ssbucketeer/issues/138)) ([3b06a09](https://github.com/statisticsnorway/ssbucketeer/commit/3b06a09e35fa27180feea7156ed874f8cb636394))
+
 ## [0.1.19](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.18...v0.1.19) (2026-02-24)
 
 
