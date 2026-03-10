@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.22](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.21...v0.1.22) (2026-03-10)
+
+
+### Bug Fixes
+
+* revert namespace selector ([#142](https://github.com/statisticsnorway/ssbucketeer/issues/142)) ([823421f](https://github.com/statisticsnorway/ssbucketeer/commit/823421fc961de0614de613e70c42fc310e813ee9))
+
 ## [0.1.21](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.20...v0.1.21) (2026-03-09)
 
 
