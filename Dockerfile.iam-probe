@@ -4,4 +4,4 @@ RUN apk add --no-cache curl
 
 ENTRYPOINT [ "sh", "-c" ]
 
-CMD [ "until curl -f -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2; done; until curl -fsI -X POST http://localhost:15020/quitquitquit; do sleep 2; done; exit 0" ]
+CMD [ "until curl -f -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token; do sleep 2; done; exit 0" ]

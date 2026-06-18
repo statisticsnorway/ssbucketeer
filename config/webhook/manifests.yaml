@@ -10,6 +10,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-core-v1-pod
+  failurePolicy: Fail
+  name: mpod.ssbucketeer.dapla.ssb.no
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pods
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-apps-v1-statefulset
   failurePolicy: Fail
   name: mstatefulset.ssbucketeer.dapla.ssb.no

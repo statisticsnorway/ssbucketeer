@@ -229,6 +229,12 @@ func main() {
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		(&controller.StatefulsetMutator{
+			Client:       mgr.GetClient(),
+			Decoder:      admission.NewDecoder(mgr.GetScheme()),
+			GroupConfigs: cfg.GroupConfigs,
+		}).SetupWithManager(mgr)
+
+		(&controller.PodMutator{
 			Client:               mgr.GetClient(),
 			Decoder:              admission.NewDecoder(mgr.GetScheme()),
 			Storage:              storageClient,
@@ -264,13 +270,6 @@ func main() {
 		GroupConfigs:        cfg.GroupConfigs,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceAccount")
-		os.Exit(1)
-	}
-	if err = (&controller.JobReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Job")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

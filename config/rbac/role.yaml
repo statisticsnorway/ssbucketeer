@@ -31,32 +31,6 @@ rules:
   - patch
   - update
 - apiGroups:
-  - batch
-  resources:
-  - jobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - batch
-  resources:
-  - jobs/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - batch
-  resources:
-  - jobs/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - ""
   resources:
   - configmaps
@@ -67,6 +41,32 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - ""
   resources:
