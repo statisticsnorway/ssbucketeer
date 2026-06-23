@@ -58,6 +58,7 @@ type config struct {
 	IamProbeImage         string                          `env:"IAM_PROBE_IMAGE"`
 	PrecreatorImage       *string                         `env:"PRECREATOR_IMAGE"`
 	ADCGroupEnvName       string                          `env:"ADC_GROUP_ENV_NAME"`
+	TeamGcpProjectEnvName string                          `env:"TEAM_GCP_PROJECT_ENV_NAME"`
 	GroupConfigs          []controller.AccessGroupConfig  `env:"GROUP_CONFIG,required,notEmpty"`
 	AuditSinks            []auditSink                     `env:"AUDIT_SINKS"`
 	SharedBucketTemplate  controller.SharedBucketTemplate `env:"SHARED_BUCKET_TEMPLATE" envDefault:"ssb-{{.TeamName}}-data-delt-{{.BucketShortName}}-{{.Stage}}"`
