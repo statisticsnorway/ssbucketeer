@@ -47,11 +47,12 @@ type StatefulsetMutator struct {
 	Projects *rm.ProjectsClient
 	Folders  *rm.FoldersClient
 
-	TeamsFolderNumber string
-	Stage             string
-	IamProbeImage     string
-	PrecreatorImage   *string
-	ADCGroupEnvName   string
+	TeamsFolderNumber     string
+	Stage                 string
+	IamProbeImage         string
+	PrecreatorImage       *string
+	ADCGroupEnvName       string
+	TeamGcpProjectEnvName string
 
 	GroupConfigs AccessGroupConfigs
 
@@ -129,6 +130,27 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 	}
 
+	teamGoogleProject, err := m.getStandardProject(ctx, team, *groupConfig)
+	if err != nil {
+		log.Error(err, "could not find standard project")
+	}
+
+	if m.TeamGcpProjectEnvName != "" {
+		teamGoogleProjectId := "-1"
+		if teamGoogleProject != nil {
+			teamGoogleProjectId = teamGoogleProject.ProjectId
+		}
+
+		envIndex := slices.IndexFunc(serviceContainer.Env, func(e corev1.EnvVar) bool {
+			return e.Name == m.TeamGcpProjectEnvName
+		})
+		if envIndex == -1 {
+			serviceContainer.Env = append(serviceContainer.Env, corev1.EnvVar{Name: m.TeamGcpProjectEnvName, Value: teamGoogleProjectId})
+		} else {
+			serviceContainer.Env[envIndex].Value = teamGoogleProjectId
+		}
+	}
+
 	accessExpired := false
 	if groupConfig.ReasonRequired {
 		parsedDuration, err := time.ParseDuration(sfs.Annotations[requestedServiceDurationAnnotation])
@@ -153,8 +175,8 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 
 		// TODO: Use Dapla Team API for this?
-		if sfs.Annotations[mountStandardBucketsAnnotation] == "true" {
-			if err := m.addStandardBuckets(ctx, team, *groupConfig, bucketMounts); err != nil {
+		if sfs.Annotations[mountStandardBucketsAnnotation] == "true" && teamGoogleProject != nil {
+			if err := m.addStandardBuckets(ctx, team, teamGoogleProject.ProjectId, bucketMounts); err != nil {
 				log.Error(err, "failed to add standard buckets")
 			}
 		}
@@ -283,7 +305,7 @@ func getFolderWithDisplayName(it *rm.FolderIterator, displayName string) (*rmpb.
 	}
 }
 
-func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string, gc AccessGroupConfig, bucketMounts map[string]string) error {
+func (m *StatefulsetMutator) getStandardProject(ctx context.Context, team string, gc AccessGroupConfig) (*rmpb.Project, error) {
 	teamFolderIt := m.Folders.ListFolders(ctx, &rmpb.ListFoldersRequest{
 		Parent: fmt.Sprintf("folders/%s", m.TeamsFolderNumber),
 	})
@@ -292,12 +314,12 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 	// do we need to check anything?
 	folder, err := getFolderWithDisplayName(teamFolderIt, team)
 	if err != nil {
-		return fmt.Errorf("get folder %q: %w", team, err)
+		return nil, fmt.Errorf("get folder %q: %w", team, err)
 	}
 
 	projectName, err := gc.ProjectTemplate.Execute(ProjectTemplateData{TeamName: team, Stage: m.Stage})
 	if err != nil {
-		return fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.Name(), err)
+		return nil, fmt.Errorf("execute template %s: %w", gc.ProjectTemplate.Name(), err)
 	}
 
 	projectIt := m.Projects.SearchProjects(ctx, &rmpb.SearchProjectsRequest{
@@ -306,11 +328,15 @@ func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string
 
 	project, err := projectIt.Next()
 	if err != nil {
-		return fmt.Errorf("get project %q in folder %q: %w", team, folder.Name, err)
+		return nil, fmt.Errorf("get project %q in folder %q: %w", team, folder.Name, err)
 	}
 
+	return project, nil
+}
+
+func (m *StatefulsetMutator) addStandardBuckets(ctx context.Context, team string, projectId string, bucketMounts map[string]string) error {
 	bucketPrefix := fmt.Sprintf("ssb-%s-data-", team)
-	bucketIt := m.Storage.Buckets(ctx, project.ProjectId)
+	bucketIt := m.Storage.Buckets(ctx, projectId)
 	bucketIt.Prefix = bucketPrefix
 
 	for {
