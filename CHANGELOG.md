@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.23](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.22...v0.1.23) (2026-06-23)
+
+
+### Features
+
+* add team gcp project id to service environment ([#154](https://github.com/statisticsnorway/ssbucketeer/issues/154)) ([c11f3f4](https://github.com/statisticsnorway/ssbucketeer/commit/c11f3f471fe6ef2a185c15b55a5a48bfacaff02e))
+
 ## [0.1.22](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.21...v0.1.22) (2026-03-10)
 
 
