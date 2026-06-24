@@ -32,9 +32,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	klog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	klog "sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // ServiceAccountReconciler reconciles a ServiceAccount object
@@ -51,21 +52,12 @@ type ServiceAccountReconciler struct {
 	GroupConfigs []AccessGroupConfig
 }
 
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO: Modify the Reconcile function to compare the state specified by
-// the ServiceAccount object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.2/pkg/reconcile
 func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := klog.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	var sa corev1.ServiceAccount
 	if err := r.Get(ctx, req.NamespacedName, &sa); err != nil {
@@ -134,6 +126,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *ServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.ServiceAccount{}).
+		Named("serviceaccount").
 		Complete(r)
 }
 

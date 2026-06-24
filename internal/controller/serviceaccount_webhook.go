@@ -8,16 +8,14 @@ import (
 
 	"github.com/statisticsnorway/ssbucketeer/internal/audit"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:webhook:path=/validate--v1-serviceaccount,mutating=false,failurePolicy=fail,groups="",resources=serviceaccounts,verbs=create;update,versions=v1,name=vserviceaccount.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
 
-var _ webhook.CustomValidator = (*ServiceAccountValidator)(nil)
+var _ admission.Validator[*corev1.ServiceAccount] = (*ServiceAccountValidator)(nil)
 
 type IllegalImpersionationError struct {
 	User           string
@@ -45,33 +43,27 @@ type ServiceAccountValidator struct {
 }
 
 func (m *ServiceAccountValidator) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&corev1.ServiceAccount{}).
+	return ctrl.NewWebhookManagedBy(mgr, &corev1.ServiceAccount{}).
 		WithValidator(m).
 		Complete()
 }
 
-func (m *ServiceAccountValidator) ValidateCreate(ctx context.Context, req runtime.Object) (admission.Warnings, error) {
-	return m.validate(ctx, req)
+func (m *ServiceAccountValidator) ValidateCreate(ctx context.Context, sa *corev1.ServiceAccount) (admission.Warnings, error) {
+	return m.validate(ctx, sa)
 }
 
-func (m *ServiceAccountValidator) ValidateUpdate(ctx context.Context, old, new runtime.Object) (admission.Warnings, error) {
+func (m *ServiceAccountValidator) ValidateUpdate(ctx context.Context, old, new *corev1.ServiceAccount) (admission.Warnings, error) {
 	return m.validate(ctx, new)
 }
 
-func (m *ServiceAccountValidator) ValidateDelete(ctx context.Context, req runtime.Object) (admission.Warnings, error) {
+func (m *ServiceAccountValidator) ValidateDelete(ctx context.Context, sa *corev1.ServiceAccount) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // validate checks if a group impersonation is requested, and, if so, whether the user (namespace)
 // is allowed to impersonate that group and whether the duration is within the allowed limit.
-func (m *ServiceAccountValidator) validate(ctx context.Context, req runtime.Object) (admission.Warnings, error) {
+func (m *ServiceAccountValidator) validate(ctx context.Context, sa *corev1.ServiceAccount) (admission.Warnings, error) {
 	log := klog.FromContext(ctx)
-
-	sa, ok := req.(*corev1.ServiceAccount)
-	if !ok {
-		return nil, fmt.Errorf("expected a ServiceAccount, but got a %T", req)
-	}
 
 	group, ok := sa.Annotations[impersonateGroupAnnotation]
 	if !ok {
