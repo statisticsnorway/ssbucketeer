@@ -27,14 +27,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=update
 
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;update;patch
-//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=create;get;list;watch;update;patch
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=create;get;list;watch;update;patch
 
-//+kubebuilder:webhook:path=/mutate-apps-v1-statefulset,mutating=true,failurePolicy=fail,groups=apps,resources=statefulsets,verbs=create;update,versions=v1,name=mstatefulset.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-apps-v1-statefulset,mutating=true,failurePolicy=fail,groups=apps,resources=statefulsets,verbs=create;update,versions=v1,name=mstatefulset.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
 
 var _ admission.Defaulter[*appsv1.StatefulSet] = (*StatefulsetMutator)(nil)
 
@@ -300,7 +300,7 @@ func (m *StatefulsetMutator) getStandardProject(ctx context.Context, team string
 		Parent: fmt.Sprintf("folders/%s", m.TeamsFolderNumber),
 	})
 
-	// TODO? there should only ever be one folder with a specfic display name in a folder,
+	// TODO? there should only ever be one folder with a specific display name in a folder,
 	// do we need to check anything?
 	folder, err := getFolderWithDisplayName(teamFolderIt, team)
 	if err != nil {

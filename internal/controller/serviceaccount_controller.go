@@ -32,7 +32,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	klog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -133,7 +132,7 @@ func (r *ServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group string, nn types.NamespacedName) (ctrl.Result, error) {
 	gcpSaRef := toGcpSaRef(r.DaplaGroupSaProject, group)
 	k8sSaRef := toK8sSaRef(r.ClusterProjectId, nn.Namespace, nn.Name)
-	log := klog.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
+	log := logf.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
 
 	// Get the current IAM policy set on this SA
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
@@ -176,7 +175,7 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.ServiceAccount, group string, nn types.NamespacedName) (ctrl.Result, error) {
 	gcpSaRef := toGcpSaRef(r.DaplaGroupSaProject, group)
 	k8sSaRef := toK8sSaRef(r.ClusterProjectId, nn.Namespace, nn.Name)
-	log := klog.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
+	log := logf.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
 
 	// Get the current IAM policy set on this SA
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
@@ -241,14 +240,14 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.S
 }
 
 func (r *ServiceAccountReconciler) updateIamPolicy(ctx context.Context, policy *iam.Policy, gcpSaRef string) (ctrl.Result, error) {
-	log := klog.FromContext(ctx)
+	log := logf.FromContext(ctx)
 	policy.Version = 3
 	policy, err := r.Iam.Projects.ServiceAccounts.SetIamPolicy(gcpSaRef, &iam.SetIamPolicyRequest{
 		Policy:     policy,
 		UpdateMask: "bindings,etag",
 	}).Do()
 
-	if policy != nil && policy.ServerResponse.HTTPStatusCode == http.StatusConflict {
+	if policy != nil && policy.HTTPStatusCode == http.StatusConflict {
 		log.Info("concurrency error in IAM API (policy was modified during reconcile), requeueing")
 		return ctrl.Result{Requeue: true}, errIamConcurrencyError
 	}
@@ -256,7 +255,7 @@ func (r *ServiceAccountReconciler) updateIamPolicy(ctx context.Context, policy *
 }
 
 func ensureCorrectBinding(ctx context.Context, policy *iam.Policy, binding, wantedBinding *iam.Binding) (modified bool) {
-	log := klog.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	if binding == nil {
 		if wantedBinding == nil {

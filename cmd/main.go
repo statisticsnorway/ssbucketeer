@@ -210,8 +210,8 @@ func main() {
 	cfg, err := env.ParseAsWithOptions[config](env.Options{
 		Prefix: "SSBUCKETEER_",
 		FuncMap: map[reflect.Type]env.ParserFunc{
-			reflect.TypeOf([]controller.AccessGroupConfig{}): yamlParser[[]controller.AccessGroupConfig],
-			reflect.TypeOf([]auditSink{}):                    yamlParser[[]auditSink],
+			reflect.TypeFor[[]controller.AccessGroupConfig](): yamlParser[[]controller.AccessGroupConfig],
+			reflect.TypeFor[[]auditSink]():                    yamlParser[[]auditSink],
 		},
 	})
 	if err != nil {
@@ -285,7 +285,7 @@ func main() {
 	}()
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		(&controller.StatefulsetMutator{
+		if err = (&controller.StatefulsetMutator{
 			Client:                mgr.GetClient(),
 			Decoder:               admission.NewDecoder(mgr.GetScheme()),
 			Storage:               storageClient,
@@ -299,7 +299,10 @@ func main() {
 			TeamGcpProjectEnvName: cfg.TeamGcpProjectEnvName,
 			GroupConfigs:          cfg.GroupConfigs,
 			SharedBucketTemplate:  cfg.SharedBucketTemplate,
-		}).SetupWithManager(mgr)
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to register webhook", "webhook", "StatefulSet")
+			os.Exit(1)
+		}
 
 		if err = (&controller.ServiceAccountValidator{
 			Auth:         gAuth,
