@@ -1,6 +1,6 @@
 module github.com/statisticsnorway/ssbucketeer
 
-go 1.26.0
+go 1.27.0
 
 require (
 	cloud.google.com/go/logging v1.18.0
@@ -10,7 +10,6 @@ require (
 	github.com/go-test/deep v1.1.1
 	github.com/onsi/ginkgo/v2 v2.27.4
 	github.com/onsi/gomega v1.39.0
-	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93
 	google.golang.org/api v0.286.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.36.0
@@ -99,6 +98,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
 	golang.org/x/mod v0.36.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
