@@ -30,6 +30,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -100,7 +101,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		if controllerutil.RemoveFinalizer(&job, finalizerName) {
 			if err := r.Update(ctx, &job); err != nil {
 				if apierrors.IsConflict(err) {
-					return ctrl.Result{Requeue: true}, nil
+					return ctrl.Result{RequeueAfter: time.Second}, nil
 				}
 				log.Error(err, "failed to remove finalizer")
 				return ctrl.Result{}, err
@@ -165,7 +166,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if err := r.Update(ctx, &sfs); err != nil {
 		if apierrors.IsConflict(err) {
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		log.Error(err, "could not update StatefulSet")
 		return ctrl.Result{}, err
@@ -174,7 +175,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if controllerutil.RemoveFinalizer(&job, finalizerName) {
 		if err := r.Update(ctx, &job); err != nil {
 			if apierrors.IsConflict(err) {
-				return ctrl.Result{Requeue: true}, nil
+				return ctrl.Result{RequeueAfter: time.Second}, nil
 			}
 			log.Error(err, "failed to remove finalizer")
 			return ctrl.Result{}, err
