@@ -40,13 +40,8 @@ func addOrUpdatePrecreator(podspec *corev1.PodSpec, bucketMounts map[string]stri
 	return true
 }
 
-func removePrecreator(podspec *corev1.PodSpec) (modified bool) {
+func removePrecreator(podspec *corev1.PodSpec) {
 	podspec.Containers = slices.DeleteFunc(podspec.Containers, func(c corev1.Container) bool {
-		if c.Name == precreatorContainerName {
-			modified = true
-			return true
-		}
-		return false
+		return c.Name == precreatorContainerName
 	})
-	return false
 }

@@ -28,7 +28,7 @@ func (a *GoogleAuther) UserIsMemberOf(user, group string) (bool, error) {
 	}
 
 	if strings.Contains(user, "kons") {
-		user = strings.Replace(userEmail, "-", "_", 1)
+		userEmail = strings.Replace(userEmail, "-", "_", 1)
 		isMemberResponse, err = a.Ci.Groups.Memberships.
 			CheckTransitiveMembership(groupResponse.Name).
 			Query(fmt.Sprintf("member_key_id == '%s'", userEmail)).Do()

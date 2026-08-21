@@ -1,17 +1,25 @@
 /*
-Copyright 2024.
+# The MIT License
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Copyright 2026 Statistisk sentralbyrå - Statistics Norway
 
-    http://www.apache.org/licenses/LICENSE-2.0
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 package controller
@@ -22,6 +30,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -34,7 +43,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	klog "sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // JobReconciler reconciles a Job object
@@ -43,19 +52,19 @@ type JobReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=batch,resources=jobs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=batch,resources=jobs/finalizers,verbs=update
 
 func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := klog.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	var job batchv1.Job
 	if err := r.Get(ctx, req.NamespacedName, &job); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "could not fetch Job")
+		log.Error(err, "could not fetch Jobb")
 		return ctrl.Result{}, err
 	}
 
@@ -92,7 +101,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		if controllerutil.RemoveFinalizer(&job, finalizerName) {
 			if err := r.Update(ctx, &job); err != nil {
 				if apierrors.IsConflict(err) {
-					return ctrl.Result{Requeue: true}, nil
+					return ctrl.Result{RequeueAfter: time.Second}, nil
 				}
 				log.Error(err, "failed to remove finalizer")
 				return ctrl.Result{}, err
@@ -105,11 +114,11 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	replicasStr := strings.TrimPrefix(sfs.Annotations[iamProbeStatus], iamProbeRunningPrefix)
 	replicas, err := strconv.Atoi(replicasStr)
 	if err != nil {
-		log.Error(err, "invalid iamProbeStatus %q, defaulting to 1 replica")
+		log.Error(err, "invalid iamProbeStatus, defaulting to 1 replica")
 		replicas = 1
 	}
 
-	sfs.Spec.Replicas = ptr.To(int32(replicas))
+	sfs.Spec.Replicas = new(int32(replicas))
 	sfs.Annotations[iamProbeStatus] = iamProbeDone
 
 	// Find the service container, so we can add volumeMounts
@@ -126,16 +135,14 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		Data: map[string]string{
 			"refresh-buckets": "#!/bin/bash\ncurl http://localhost:8383/refresh-folders",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: sfs.Namespace,
-			Name:      fmt.Sprintf("%s-refresh-buckets", sfs.Name),
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					Kind:       "StatefulSet",
-					APIVersion: "apps/v1",
-					Name:       sfs.Name,
-					UID:        sfs.UID,
-				},
+		Namespace: sfs.Namespace,
+		Name:      fmt.Sprintf("%s-refresh-buckets", sfs.Name),
+		OwnerReferences: []metav1.OwnerReference{
+			{
+				Kind:       "StatefulSet",
+				APIVersion: "apps/v1",
+				Name:       sfs.Name,
+				UID:        sfs.UID,
 			},
 		},
 	}
@@ -144,13 +151,9 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 	refreshBucketsVolume := corev1.Volume{
 		Name: "refresh-buckets-command",
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: refreshBucketsConfigMap.Name,
-				},
-				DefaultMode: ptr.To[int32](0o555), // Read, execute
-			},
+		ConfigMap: &corev1.ConfigMapVolumeSource{
+			Name:        refreshBucketsConfigMap.Name,
+			DefaultMode: ptr.To[int32](0o555), // Read, execute
 		},
 	}
 	refreshBucketsVolumeMount := corev1.VolumeMount{
@@ -163,7 +166,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if err := r.Update(ctx, &sfs); err != nil {
 		if apierrors.IsConflict(err) {
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		log.Error(err, "could not update StatefulSet")
 		return ctrl.Result{}, err
@@ -172,7 +175,7 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if controllerutil.RemoveFinalizer(&job, finalizerName) {
 		if err := r.Update(ctx, &job); err != nil {
 			if apierrors.IsConflict(err) {
-				return ctrl.Result{Requeue: true}, nil
+				return ctrl.Result{RequeueAfter: time.Second}, nil
 			}
 			log.Error(err, "failed to remove finalizer")
 			return ctrl.Result{}, err
@@ -186,5 +189,6 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 func (r *JobReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.Job{}).
+		Named("job").
 		Complete(r)
 }
