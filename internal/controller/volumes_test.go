@@ -172,6 +172,9 @@ func TestRemoveBucketsFromPodSpec(t *testing.T) {
 							},
 						},
 					},
+					{
+						Name: precreatorContainerName,
+					},
 				},
 			},
 			ExpectedModified: true,
