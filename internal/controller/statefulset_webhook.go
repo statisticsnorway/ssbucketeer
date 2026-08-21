@@ -220,12 +220,10 @@ func (m *StatefulsetMutator) launchIamProbe(ctx context.Context, sfs *appsv1.Sta
 	sfs.Spec.Replicas = ptr.To[int32](0)
 
 	probeJob := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
-			Namespace: sfs.Namespace,
-			Annotations: map[string]string{
-				probeJobStatefulsetAnnotation: sfs.Name,
-			},
+		Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
+		Namespace: sfs.Namespace,
+		Annotations: map[string]string{
+			probeJobStatefulsetAnnotation: sfs.Name,
 		},
 		Spec: batchv1.JobSpec{
 			ActiveDeadlineSeconds:   ptr.To[int64](300),

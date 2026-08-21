@@ -134,16 +134,14 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		Data: map[string]string{
 			"refresh-buckets": "#!/bin/bash\ncurl http://localhost:8383/refresh-folders",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: sfs.Namespace,
-			Name:      fmt.Sprintf("%s-refresh-buckets", sfs.Name),
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					Kind:       "StatefulSet",
-					APIVersion: "apps/v1",
-					Name:       sfs.Name,
-					UID:        sfs.UID,
-				},
+		Namespace: sfs.Namespace,
+		Name:      fmt.Sprintf("%s-refresh-buckets", sfs.Name),
+		OwnerReferences: []metav1.OwnerReference{
+			{
+				Kind:       "StatefulSet",
+				APIVersion: "apps/v1",
+				Name:       sfs.Name,
+				UID:        sfs.UID,
 			},
 		},
 	}
@@ -152,13 +150,9 @@ func (r *JobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 	refreshBucketsVolume := corev1.Volume{
 		Name: "refresh-buckets-command",
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: refreshBucketsConfigMap.Name,
-				},
-				DefaultMode: ptr.To[int32](0o555), // Read, execute
-			},
+		ConfigMap: &corev1.ConfigMapVolumeSource{
+			Name:        refreshBucketsConfigMap.Name,
+			DefaultMode: ptr.To[int32](0o555), // Read, execute
 		},
 	}
 	refreshBucketsVolumeMount := corev1.VolumeMount{
