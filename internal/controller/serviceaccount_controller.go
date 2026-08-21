@@ -111,7 +111,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		sa.Annotations[gkeWIAnnotation] = gcpSa
 		if err := r.Update(ctx, &sa); err != nil {
 			if apierrors.IsConflict(err) {
-				return ctrl.Result{Requeue: true}, nil
+				return ctrl.Result{RequeueAfter: time.Second}, nil
 			}
 			log.Error(err, "failed to add GKE WI annotation to ServiceAccount")
 			return ctrl.Result{}, err
@@ -249,7 +249,7 @@ func (r *ServiceAccountReconciler) updateIamPolicy(ctx context.Context, policy *
 
 	if policy != nil && policy.HTTPStatusCode == http.StatusConflict {
 		log.Info("concurrency error in IAM API (policy was modified during reconcile), requeueing")
-		return ctrl.Result{Requeue: true}, errIamConcurrencyError
+		return ctrl.Result{RequeueAfter: time.Second}, errIamConcurrencyError
 	}
 	return ctrl.Result{}, err
 }
