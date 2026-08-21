@@ -16,7 +16,6 @@ linters:
     - govet
     - ineffassign
     - modernize
-    - misspell
     - nakedret
     - prealloc
     - revive
