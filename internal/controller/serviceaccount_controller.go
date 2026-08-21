@@ -42,7 +42,7 @@ type ServiceAccountReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	Auth Auther
+	Auth Memberships
 	Iam  *iam.Service
 
 	DaplaGroupSaProject string
@@ -195,7 +195,7 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.S
 
 	// Fetch the impersonation duration directly from the SA annotation (set by StatefulSet webhook)
 	saImpersonationDurationStr := sa.Annotations[requestedServiceDurationAnnotation]
-	expirationExpr := "true"
+	expirationExpr := "true" //nolint:goconst
 	if saImpersonationDurationStr != "" {
 		parsedDuration, err := time.ParseDuration(saImpersonationDurationStr)
 		if err != nil {

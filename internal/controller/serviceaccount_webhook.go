@@ -36,7 +36,7 @@ func (e IllegalNamespaceError) Error() string {
 }
 
 type ServiceAccountValidator struct {
-	Auth         Auther
+	Auth         Memberships
 	GroupConfigs AccessGroupConfigs
 	Audit        *audit.Router
 	Stage        string
@@ -163,7 +163,7 @@ func getChartNameAndVersion(sa corev1.ServiceAccount) (name string, version stri
 		split := strings.Split(meta, "-")
 		return strings.Join(split[:len(split)-1], "-"), split[len(split)-1]
 	}
-	return "unknown", "unknown"
+	return "unknown", "unknown" //nolint:goconst
 }
 
 func getInstanceMeta(sa corev1.ServiceAccount) (name string, namespace string) {

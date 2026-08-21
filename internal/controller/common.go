@@ -43,7 +43,7 @@ var (
 	errIamConcurrencyError = fmt.Errorf("concurrency error when updating IAM policy")
 )
 
-type Auther interface {
+type Memberships interface {
 	UserIsMemberOf(username, group string) (bool, error)
 }
 

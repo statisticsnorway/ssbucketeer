@@ -169,7 +169,7 @@ func (m *StatefulsetMutator) Default(ctx context.Context, sfs *appsv1.StatefulSe
 		}
 
 		// TODO: Use Dapla Team API for this?
-		if sfs.Annotations[mountStandardBucketsAnnotation] == "true" && teamGoogleProject != nil {
+		if sfs.Annotations[mountStandardBucketsAnnotation] == "true" && teamGoogleProject != nil { //nolint:goconst
 			if err := m.addStandardBuckets(ctx, team, teamGoogleProject.ProjectId, bucketMounts); err != nil {
 				log.Error(err, "failed to add standard buckets")
 			}

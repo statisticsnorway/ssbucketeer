@@ -364,7 +364,7 @@ func getGKEProjectId() (string, error) {
 		return "", err
 	}
 
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return "", err
