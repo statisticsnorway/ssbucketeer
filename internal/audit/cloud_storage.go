@@ -7,8 +7,9 @@ import (
 	"strings"
 	"text/template"
 
+	"math/rand/v2"
+
 	"cloud.google.com/go/storage"
-	"golang.org/x/exp/rand"
 )
 
 // CloudStorage implements the Sink interface for routing logs to a Google Cloud Storage bucket.
@@ -43,7 +44,7 @@ func NewCloudStorageSink(ctx context.Context, config map[string]string) (*CloudS
 		var chars = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 		randomChars := make([]rune, length)
 		for i := range randomChars {
-			randomChars[i] = chars[rand.Intn(len(chars))]
+			randomChars[i] = chars[rand.IntN(len(chars))]
 		}
 		return string(randomChars)
 	}})

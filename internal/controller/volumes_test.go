@@ -7,6 +7,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const (
+	volumeName     = "my-volume"
+	notGcsFuseName = "not-gcsfuse"
+)
+
 func TestVolumeNameIs(t *testing.T) {
 	type TestCase struct {
 		Description string
@@ -18,14 +23,14 @@ func TestVolumeNameIs(t *testing.T) {
 	tests := []TestCase{
 		{
 			Description: "Should return false if name does not match",
-			Volume:      corev1.Volume{Name: "my-volume"},
+			Volume:      corev1.Volume{Name: volumeName},
 			Name:        "abc",
 			Expected:    false,
 		},
 		{
 			Description: "Should return true if name matches",
-			Volume:      corev1.Volume{Name: "my-volume"},
-			Name:        "my-volume",
+			Volume:      corev1.Volume{Name: volumeName},
+			Name:        volumeName,
 			Expected:    true,
 		},
 	}
@@ -50,14 +55,14 @@ func TestVolumeMountNameIs(t *testing.T) {
 	tests := []TestCase{
 		{
 			Description: "Should return false if name does not match",
-			VolumeMount: corev1.VolumeMount{Name: "my-volume"},
+			VolumeMount: corev1.VolumeMount{Name: volumeName},
 			Name:        "abc",
 			Expected:    false,
 		},
 		{
 			Description: "Should return true if name matches",
-			VolumeMount: corev1.VolumeMount{Name: "my-volume"},
-			Name:        "my-volume",
+			VolumeMount: corev1.VolumeMount{Name: volumeName},
+			Name:        volumeName,
 			Expected:    true,
 		},
 	}
@@ -85,15 +90,15 @@ func TestRemoveBucketsFromPodSpec(t *testing.T) {
 			PodSpec: corev1.PodSpec{
 				Volumes: []corev1.Volume{
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 					},
 				},
 				Containers: []corev1.Container{
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name: "not-gcsfuse",
+								Name: notGcsFuseName,
 							},
 						},
 					},
@@ -102,15 +107,15 @@ func TestRemoveBucketsFromPodSpec(t *testing.T) {
 			ExpectedPodSpec: corev1.PodSpec{
 				Volumes: []corev1.Volume{
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 					},
 				},
 				Containers: []corev1.Container{
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name: "not-gcsfuse",
+								Name: notGcsFuseName,
 							},
 						},
 					},
@@ -126,7 +131,7 @@ func TestRemoveBucketsFromPodSpec(t *testing.T) {
 						Name: "gcsfuse-1",
 					},
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 					},
 					{
 						Name: "gcsfuse-2",
@@ -134,13 +139,13 @@ func TestRemoveBucketsFromPodSpec(t *testing.T) {
 				},
 				Containers: []corev1.Container{
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name: "gcsfuse-1",
 							},
 							{
-								Name: "not-gcsfuse",
+								Name: notGcsFuseName,
 							},
 							{
 								Name: "gcsfuse-2",
@@ -155,17 +160,20 @@ func TestRemoveBucketsFromPodSpec(t *testing.T) {
 			ExpectedPodSpec: corev1.PodSpec{
 				Volumes: []corev1.Volume{
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 					},
 				},
 				Containers: []corev1.Container{
 					{
-						Name: "not-gcsfuse",
+						Name: notGcsFuseName,
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name: "not-gcsfuse",
+								Name: notGcsFuseName,
 							},
 						},
+					},
+					{
+						Name: precreatorContainerName,
 					},
 				},
 			},
