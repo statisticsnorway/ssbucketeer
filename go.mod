@@ -1,6 +1,6 @@
 module github.com/statisticsnorway/ssbucketeer
 
-go 1.27.0
+go 1.27.3
 
 require (
 	cloud.google.com/go/logging v1.19.1
