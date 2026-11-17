@@ -33,7 +33,7 @@ func (t *AnonymousTemplate[T]) UnmarshalYAML(unmarshal func(any) error) error {
 		return fmt.Errorf("unmarshal template string: %w", err)
 	}
 	t.Template = template.New(templateString)
-	if _, err := t.Template.Parse(templateString); err != nil {
+	if _, err := t.Parse(templateString); err != nil {
 		return fmt.Errorf("parse template string: %w", err)
 	}
 	return nil
@@ -42,7 +42,7 @@ func (t *AnonymousTemplate[T]) UnmarshalYAML(unmarshal func(any) error) error {
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
 func (t *AnonymousTemplate[T]) UnmarshalText(text []byte) error {
 	t.Template = template.New(string(text))
-	if _, err := t.Template.Parse(string(text)); err != nil {
+	if _, err := t.Parse(string(text)); err != nil {
 		return fmt.Errorf("parse template string: %w", err)
 	}
 	return nil

@@ -43,7 +43,7 @@ var (
 	errIamConcurrencyError = fmt.Errorf("concurrency error when updating IAM policy")
 )
 
-type Auther interface {
+type Memberships interface {
 	UserIsMemberOf(username, group string) (bool, error)
 }
 
@@ -75,7 +75,7 @@ type AccessGroupConfigs []AccessGroupConfig
 
 func (cs AccessGroupConfigs) GetConfig(group string) *AccessGroupConfig {
 	for _, c := range cs {
-		if team := strings.TrimSuffix(group, c.Name); team != group {
+		if strings.HasSuffix(group, c.Name) {
 			return &c
 		}
 	}

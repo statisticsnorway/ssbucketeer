@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -48,15 +47,13 @@ func addBucketsToPodSpec(podspec *corev1.PodSpec, container *corev1.Container, b
 		if !slices.ContainsFunc(podspec.Volumes, volumeNameIs(volumeName)) {
 			volumes = append(volumes, corev1.Volume{
 				Name: volumeName,
-				VolumeSource: corev1.VolumeSource{
-					CSI: &corev1.CSIVolumeSource{
-						Driver:   "gcsfuse.csi.storage.gke.io",
-						ReadOnly: ptr.To(false),
-						VolumeAttributes: map[string]string{
-							"bucketName":             bucket,
-							"mountOptions":           "uid=1000,gid=100",
-							"gcsfuseLoggingSeverity": "warning",
-						},
+				CSI: &corev1.CSIVolumeSource{
+					Driver:   "gcsfuse.csi.storage.gke.io",
+					ReadOnly: new(false),
+					VolumeAttributes: map[string]string{
+						"bucketName":             bucket,
+						"mountOptions":           "uid=1000,gid=100",
+						"gcsfuseLoggingSeverity": "warning",
 					},
 				},
 			})

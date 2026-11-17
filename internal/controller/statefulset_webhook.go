@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"net/http"
 	"slices"
 	"strings"
 	"time"
@@ -28,16 +27,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=update
 
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;update;patch
-//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=create;get;list;watch;update;patch
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=create;get;list;watch;update;patch
 
-//+kubebuilder:webhook:path=/mutate-apps-v1-statefulset,mutating=true,failurePolicy=fail,groups=apps,resources=statefulsets,verbs=create;update,versions=v1,name=mstatefulset.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-apps-v1-statefulset,mutating=true,failurePolicy=fail,groups=apps,resources=statefulsets,verbs=create;update,versions=v1,name=mstatefulset.ssbucketeer.dapla.ssb.no,sideEffects=None,admissionReviewVersions=v1
 
-var _ admission.Handler = (*StatefulsetMutator)(nil)
+var _ admission.Defaulter[*appsv1.StatefulSet] = (*StatefulsetMutator)(nil)
 
 type StatefulsetMutator struct {
 	Client  client.Client
@@ -64,25 +63,20 @@ type SharedBucketSpec struct {
 	ShortName string `json:"sharedBucket"`
 }
 
-func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) {
-	mgr.GetWebhookServer().Register("/mutate-apps-v1-statefulset", &admission.Webhook{Handler: m})
+func (m *StatefulsetMutator) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewWebhookManagedBy(mgr, &appsv1.StatefulSet{}).WithDefaulter(m).Complete()
 }
 
-func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) admission.Response {
+func (m *StatefulsetMutator) Default(ctx context.Context, sfs *appsv1.StatefulSet) error {
 	log := klog.FromContext(ctx)
-	sfs := &appsv1.StatefulSet{}
-	err := m.Decoder.Decode(req, sfs)
-	if err != nil {
-		return admission.Errored(http.StatusBadRequest, err)
-	}
 
 	if !sfs.GetDeletionTimestamp().IsZero() {
-		return admission.Allowed("statefulset is being deleted")
+		return nil
 	}
 
 	group, ok := sfs.Annotations[impersonateGroupAnnotation]
 	if !ok {
-		return admission.Allowed("skipping ssbucketeer mutation")
+		return nil
 	}
 
 	ensurePodAnnotations(&sfs.Spec.Template)
@@ -92,7 +86,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	if serviceContainer == nil {
 		err := fmt.Errorf("could not find container with name %q", sfs.Annotations[serviceContainerAnnotation])
 		log.Error(err, "could not find service container")
-		return admission.Errored(http.StatusBadRequest, err)
+		return err
 	}
 
 	saAnnotations := map[string]string{
@@ -102,7 +96,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 
 	groupConfig := m.GroupConfigs.GetConfig(group)
 	if groupConfig == nil {
-		return admission.Denied(fmt.Sprintf("no configuration found for group: %s", group))
+		return fmt.Errorf("no configuration found for group: %s", group)
 	}
 	team := groupConfig.ToTeam(group)
 
@@ -111,9 +105,9 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 	}
 
 	// Handle IAM bindings and k8s SA annotations
-	if err := m.handleServiceAccount(ctx, req.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
+	if err := m.handleServiceAccount(ctx, sfs.Namespace, sfs.Spec.Template.Spec.ServiceAccountName, saAnnotations); err != nil {
 		log.Error(err, "handle serviceaccount")
-		return admission.Denied("error handling service account")
+		return fmt.Errorf("error handling service account: %w", err)
 	}
 
 	if sfs.Spec.Template.Labels == nil {
@@ -156,7 +150,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		parsedDuration, err := time.ParseDuration(sfs.Annotations[requestedServiceDurationAnnotation])
 		if err != nil {
 			log.Error(err, "failed to parse requested duration", "durationAnnotation", sfs.Annotations[requestedServiceDurationAnnotation])
-			return admission.Denied("invalid requested duration format")
+			return fmt.Errorf("invalid requested duration format %q", sfs.Annotations[requestedServiceDurationAnnotation])
 		}
 
 		accessExpired = time.Now().After(sfs.CreationTimestamp.Add(parsedDuration))
@@ -175,7 +169,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 
 		// TODO: Use Dapla Team API for this?
-		if sfs.Annotations[mountStandardBucketsAnnotation] == "true" && teamGoogleProject != nil {
+		if sfs.Annotations[mountStandardBucketsAnnotation] == "true" && teamGoogleProject != nil { //nolint:goconst
 			if err := m.addStandardBuckets(ctx, team, teamGoogleProject.ProjectId, bucketMounts); err != nil {
 				log.Error(err, "failed to add standard buckets")
 			}
@@ -195,11 +189,7 @@ func (m *StatefulsetMutator) Handle(ctx context.Context, req admission.Request) 
 		}
 	}
 
-	marshaledStatefulSet, err := json.Marshal(sfs)
-	if err != nil {
-		return admission.Errored(http.StatusInternalServerError, err)
-	}
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledStatefulSet)
+	return nil
 }
 
 func getExtraBucketMounts(annotations map[string]string) map[string]string {
@@ -230,12 +220,10 @@ func (m *StatefulsetMutator) launchIamProbe(ctx context.Context, sfs *appsv1.Sta
 	sfs.Spec.Replicas = ptr.To[int32](0)
 
 	probeJob := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
-			Namespace: sfs.Namespace,
-			Annotations: map[string]string{
-				probeJobStatefulsetAnnotation: sfs.Name,
-			},
+		Name:      fmt.Sprintf("%s-iam-probe", sfs.Name),
+		Namespace: sfs.Namespace,
+		Annotations: map[string]string{
+			probeJobStatefulsetAnnotation: sfs.Name,
 		},
 		Spec: batchv1.JobSpec{
 			ActiveDeadlineSeconds:   ptr.To[int64](300),
@@ -310,7 +298,7 @@ func (m *StatefulsetMutator) getStandardProject(ctx context.Context, team string
 		Parent: fmt.Sprintf("folders/%s", m.TeamsFolderNumber),
 	})
 
-	// TODO? there should only ever be one folder with a specfic display name in a folder,
+	// TODO? there should only ever be one folder with a specific display name in a folder,
 	// do we need to check anything?
 	folder, err := getFolderWithDisplayName(teamFolderIt, team)
 	if err != nil {

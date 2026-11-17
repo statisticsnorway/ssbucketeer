@@ -14,19 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package e2e
+package controller
 
 import (
-	"fmt"
-	"testing"
-
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
-// Run e2e tests using the Ginkgo runner.
-func TestE2E(t *testing.T) {
-	RegisterFailHandler(Fail)
-	fmt.Fprintf(GinkgoWriter, "Starting ssbucketeer suite\n")
-	RunSpecs(t, "e2e suite")
-}
+var _ = Describe("StatefulSet Controller", func() {
+	Context("When reconciling a resource", func() {
+
+		It("should successfully reconcile the resource", func() {
+
+			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
+			// Example: If you expect a certain status condition after reconciliation, verify it here.
+		})
+	})
+})

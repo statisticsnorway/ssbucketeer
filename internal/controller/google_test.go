@@ -45,7 +45,9 @@ func (s *ciTestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unable to marshal request: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	w.Write(b)
+	if _, err := w.Write(b); err != nil {
+		http.Error(w, "could not write request: "+err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func TestIsMemberOf(t *testing.T) {

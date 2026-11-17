@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	klog "sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // ServiceAccountReconciler reconciles a ServiceAccount object
@@ -42,7 +42,7 @@ type ServiceAccountReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	Auth Auther
+	Auth Memberships
 	Iam  *iam.Service
 
 	DaplaGroupSaProject string
@@ -51,21 +51,12 @@ type ServiceAccountReconciler struct {
 	GroupConfigs []AccessGroupConfig
 }
 
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO: Modify the Reconcile function to compare the state specified by
-// the ServiceAccount object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.2/pkg/reconcile
 func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := klog.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	var sa corev1.ServiceAccount
 	if err := r.Get(ctx, req.NamespacedName, &sa); err != nil {
@@ -120,7 +111,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		sa.Annotations[gkeWIAnnotation] = gcpSa
 		if err := r.Update(ctx, &sa); err != nil {
 			if apierrors.IsConflict(err) {
-				return ctrl.Result{Requeue: true}, nil
+				return ctrl.Result{RequeueAfter: time.Second}, nil
 			}
 			log.Error(err, "failed to add GKE WI annotation to ServiceAccount")
 			return ctrl.Result{}, err
@@ -134,13 +125,14 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *ServiceAccountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.ServiceAccount{}).
+		Named("serviceaccount").
 		Complete(r)
 }
 
 func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group string, nn types.NamespacedName) (ctrl.Result, error) {
 	gcpSaRef := toGcpSaRef(r.DaplaGroupSaProject, group)
 	k8sSaRef := toK8sSaRef(r.ClusterProjectId, nn.Namespace, nn.Name)
-	log := klog.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
+	log := logf.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
 
 	// Get the current IAM policy set on this SA
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
@@ -183,7 +175,7 @@ func (r *ServiceAccountReconciler) removeIamBinding(ctx context.Context, group s
 func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.ServiceAccount, group string, nn types.NamespacedName) (ctrl.Result, error) {
 	gcpSaRef := toGcpSaRef(r.DaplaGroupSaProject, group)
 	k8sSaRef := toK8sSaRef(r.ClusterProjectId, nn.Namespace, nn.Name)
-	log := klog.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
+	log := logf.FromContext(ctx, "googleSaRef", gcpSaRef, "kubernetesSaRef", k8sSaRef)
 
 	// Get the current IAM policy set on this SA
 	policy, err := r.Iam.Projects.ServiceAccounts.GetIamPolicy(gcpSaRef).OptionsRequestedPolicyVersion(3).Do()
@@ -203,7 +195,7 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.S
 
 	// Fetch the impersonation duration directly from the SA annotation (set by StatefulSet webhook)
 	saImpersonationDurationStr := sa.Annotations[requestedServiceDurationAnnotation]
-	expirationExpr := "true"
+	expirationExpr := "true" //nolint:goconst
 	if saImpersonationDurationStr != "" {
 		parsedDuration, err := time.ParseDuration(saImpersonationDurationStr)
 		if err != nil {
@@ -248,22 +240,22 @@ func (r *ServiceAccountReconciler) handleGcpSa(ctx context.Context, sa *corev1.S
 }
 
 func (r *ServiceAccountReconciler) updateIamPolicy(ctx context.Context, policy *iam.Policy, gcpSaRef string) (ctrl.Result, error) {
-	log := klog.FromContext(ctx)
+	log := logf.FromContext(ctx)
 	policy.Version = 3
 	policy, err := r.Iam.Projects.ServiceAccounts.SetIamPolicy(gcpSaRef, &iam.SetIamPolicyRequest{
 		Policy:     policy,
 		UpdateMask: "bindings,etag",
 	}).Do()
 
-	if policy != nil && policy.ServerResponse.HTTPStatusCode == http.StatusConflict {
+	if policy != nil && policy.HTTPStatusCode == http.StatusConflict {
 		log.Info("concurrency error in IAM API (policy was modified during reconcile), requeueing")
-		return ctrl.Result{Requeue: true}, errIamConcurrencyError
+		return ctrl.Result{RequeueAfter: time.Second}, errIamConcurrencyError
 	}
 	return ctrl.Result{}, err
 }
 
 func ensureCorrectBinding(ctx context.Context, policy *iam.Policy, binding, wantedBinding *iam.Binding) (modified bool) {
-	log := klog.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	if binding == nil {
 		if wantedBinding == nil {
