@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.23...v2.1.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **chart:** do not override the image name- [#157](https://github.com/statisticsnorway/ssbucketeer/issues/157)⁠ ([3f24e19](https://github.com/statisticsnorway/ssbucketeer/commit/3f24e199e8fbb6dc74384d0b40d1cb856ddf08f9))
+
 ## [0.1.23](https://github.com/statisticsnorway/ssbucketeer/compare/v0.1.22...v0.1.23) (2026-06-23)
 
 
